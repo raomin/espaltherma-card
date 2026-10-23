@@ -11,7 +11,7 @@ import sys
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-LANGS = ["fr", "de", "it", "es"]
+LANGS = ["fr", "de", "it", "es", "nl"]
 I18N_URL = "https://raw.githubusercontent.com/raomin/ESPAltherma/beta/web/i18n/%s.json"
 
 

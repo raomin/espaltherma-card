@@ -49,6 +49,9 @@ const OWN = {
     "Outdoor unit error": "Error unidad exterior", "Indoor unit error": "Error unidad interior",
     "Lower the hot water target": "Bajar la consigna de agua caliente", "Raise the hot water target": "Subir la consigna de agua caliente",
     "Lower the leaving water target": "Bajar la consigna de impulsión", "Raise the leaving water target": "Subir la consigna de impulsión"},
+  nl: {"Mode": "Modus", "Error": "Fout", "Current": "Stroom",
+    "Lower the hot water target": "Warmwater-setpoint verlagen", "Raise the hot water target": "Warmwater-setpoint verhogen",
+    "Lower the leaving water target": "Aanvoer-setpoint verlagen", "Raise the leaving water target": "Aanvoer-setpoint verhogen"},
 };
 
 // Shrinks an SVG text to max units wide (translations can be longer than the English the drawing was made for)
