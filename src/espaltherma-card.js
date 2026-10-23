@@ -2,7 +2,7 @@
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
 //   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id})
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.14";
+const VERSION = "1.0.15";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -95,7 +95,7 @@ const TAGS = [["Outside", "out", 40, 118, 84], ["Heat pump out", "lw1", 342, 172
 
 const STYLE = `
 :host{--ea-card:var(--ha-card-background,var(--card-background-color,#fff));--ea-ink:var(--primary-text-color);--ea-ink2:var(--secondary-text-color);
---ea-line:var(--divider-color);--ea-soft:var(--secondary-background-color);--ea-hot:#e0433a;--ea-cold:#2e86de;--ea-refr:#7d8597}
+--ea-line:var(--divider-color);--ea-soft:var(--secondary-background-color);--ea-soft:color-mix(in srgb,var(--ea-ink) 7%,var(--ea-card));--ea-hot:#e0433a;--ea-cold:#2e86de;--ea-refr:#7d8597}
 :host([dark]){--ea-hot:#f2645a;--ea-cold:#4f9cf0;--ea-refr:#979dac}
 ha-card{padding:8px;overflow:hidden;position:relative}
 .lnk{position:absolute;top:10px;right:14px;font-size:12px;color:var(--ea-ink2);text-decoration:none;opacity:.75}.lnk:hover{opacity:1;text-decoration:underline}
@@ -116,9 +116,11 @@ svg.nodhw .dhw,svg.noroom .room,#pJoin,#pJoin+.fl{display:none}svg.nodhw #pJoin,
 .area{fill:var(--ea-soft);stroke:none}
 .tag rect{fill:var(--ea-card);stroke:var(--ea-line);stroke-width:1.2}
 .tag,.click,.btn{cursor:pointer}
+.step rect{fill:var(--ea-card);stroke:var(--ea-line);stroke-width:1.2}.step .half{fill:transparent}.btn:hover .half{fill:var(--ea-soft)}.btn:active .half{fill:var(--ea-line)}
+.step .sep{stroke:var(--ea-line);stroke-width:1}.step .sym{stroke:var(--ea-ink2);stroke-width:1.6;fill:none;stroke-linecap:round}
 #gDhwSet,#gLwtSet,.eff{display:none}svg.cansetdhw #gDhwSet,svg.cansetlwt #gLwtSet,.eff.on{display:block}
 svg.bizone #gLwtSet{display:none}
-.btn circle{transition:fill .15s}.btn:hover circle{fill:var(--ea-soft)}.btn:active circle{fill:var(--ea-line)}
+.step .half{transition:fill .15s}
 .tl{font:600 12px var(--paper-font-body1_-_font-family,sans-serif);fill:var(--ea-ink2)}
 .tv{font:600 18px var(--paper-font-body1_-_font-family,sans-serif);fill:var(--ea-ink)}
 .tb{font:600 38px var(--paper-font-body1_-_font-family,sans-serif);fill:var(--ea-ink)}
@@ -188,20 +190,14 @@ const SVG = `<svg viewBox="0 0 800 560" role="img">
 <rect x="346" y="519" width="14" height="12" rx="3" style="fill:var(--ea-ink2)"/>
 <circle class="sens" cx="330" cy="190" r="4.5"/><circle class="sens" cx="390" cy="90" r="4.5"/><circle class="sens" cx="300" cy="440" r="4.5"/>
 <g id="tags"></g>
-<text class="ts sz" x="500" y="62" text-anchor="middle" id="sLwSp"></text>
+<g id="gLwtSet" class="step"><rect x="438" y="45" width="124" height="26" rx="13"/><path class="sep" d="M466 51v14M534 51v14"/><g class="btn" data-act="lwt-"><title data-t="Lower the leaving water target"></title><path class="half" d="M451 45h15v26h-15a13 13 0 0 1 0 -26z"/><path class="sym" d="M448 58h8"/></g><g class="btn" data-act="lwt+"><title data-t="Raise the leaving water target"></title><path class="half" d="M534 45h15a13 13 0 0 1 0 26h-15z"/><path class="sym" d="M544 58h8M548 54v8"/></g></g>
+<text class="ts sz" x="500" y="62" text-anchor="middle" id="sLwSp" style="pointer-events:none"></text>
 <text class="ts eff" x="500" y="82" text-anchor="middle" id="sLwtEff"><title id="tLwtEff"></title><tspan id="vLwtEff"></tspan></text>
-<g id="gLwtSet"><g class="btn" data-act="lwt-"><title data-t="Lower the leaving water target"></title>
-<circle class="eq" cx="456" cy="58" r="11"/><path class="ln" d="M450 58h12"/></g>
-<g class="btn" data-act="lwt+"><title data-t="Raise the leaving water target"></title>
-<circle class="eq" cx="544" cy="58" r="11"/><path class="ln" d="M538 58h12M544 52v12"/></g></g>
+<g id="gDhwSet" class="step"><rect x="603" y="155" width="124" height="26" rx="13"/><path class="sep" d="M631 161v14M699 161v14"/><g class="btn" data-act="dhw-"><title data-t="Lower the hot water target"></title><path class="half" d="M616 155h15v26h-15a13 13 0 0 1 0 -26z"/><path class="sym" d="M613 168h8"/></g><g class="btn" data-act="dhw+"><title data-t="Raise the hot water target"></title><path class="half" d="M699 155h15a13 13 0 0 1 0 26h-15z"/><path class="sym" d="M709 168h8M713 164v8"/></g></g>
 <g class="click dhw" data-key="tank"><text class="tl" x="665" y="104" text-anchor="middle" data-t="Hot water"></text>
 <text class="tb" x="665" y="148" text-anchor="middle" id="sTank"></text>
 <text class="ts" x="665" y="172" text-anchor="middle" id="sDhwSp"></text></g>
 <text class="ts eff" x="665" y="192" text-anchor="middle" id="sDhwEff"><title id="tDhwEff"></title><tspan id="vDhwEff"></tspan></text>
-<g id="gDhwSet"><g class="btn" data-act="dhw-"><title data-t="Lower the hot water target"></title>
-<circle class="eq" cx="609" cy="167" r="13"/><path class="ln" d="M602 167h14"/></g>
-<g class="btn" data-act="dhw+"><title data-t="Raise the hot water target"></title>
-<circle class="eq" cx="721" cy="167" r="13"/><path class="ln" d="M714 167h14M721 160v14"/></g></g>
 <g class="click room sz" data-key="room"><text class="tl" x="685" y="390" text-anchor="middle" data-t="Living room"></text>
 <text class="tb" x="685" y="432" text-anchor="middle" id="sRoom"></text>
 <text class="ts" x="685" y="456" text-anchor="middle" id="sRtSp"></text></g>
@@ -300,8 +296,9 @@ class EspalthermaCard extends HTMLElement {
     const st = k => ent[k] && hass.states[ent[k]];
     const n = k => { const s = st(k); const v = s ? parseFloat(s.state) : NaN; return isNaN(v) ? null : v; };
     // A link to the board's web interface: its address is an attribute of the readings sensor
-    const attrs = Object.keys(hass.states).filter(id => /^sensor\.\w*althermasensors/.test(id)).map(id => hass.states[id].attributes);
-    const ip = (attrs.find(a => a && a.IP) || {}).IP, lnk = q("#lnk");
+    // (the AlthermaSensors entity, whatever its id: the one with ESPAltherma's IP and WifiRSSI attributes)
+    const withIp = Object.values(hass.states).find(s => s.attributes && s.attributes.IP && s.attributes.WifiRSSI !== undefined);
+    const ip = withIp && withIp.attributes.IP, lnk = q("#lnk");
     lnk.hidden = !ip;
     if (ip) { lnk.href = "http://" + ip + "/"; lnk.title = tr(hass, "Open the web interface"); }
     const on = k => { const s = st(k); return s ? s.state === "on" : null; };
