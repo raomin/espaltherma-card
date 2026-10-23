@@ -17,7 +17,9 @@ const FIND = {
   inv: /^sensor\.espaltherma_inv_frequency/, amp: /^sensor\.espaltherma_inv_primary_current/,
   v3: /^binary_sensor\.espaltherma_(3way_valve|priority_to_domestic_water)/, pump: /^binary_sensor\.espaltherma_water_pump_operation/,
   flow: /^sensor\.espaltherma_flow_sensor/, bar: /^sensor\.espaltherma_water_pressure$/,
-  mode: /^sensor\.espaltherma_operation_mode$/, err: /^sensor\.espaltherma_error_type$/,
+  // "Error type" of the outdoor unit, named "O/U Error type" once told apart from the indoor unit's "I/U Error type"
+  // (ESPAltherma #617)
+  mode: /^sensor\.espaltherma_operation_mode$/, err: /^sensor\.espaltherma_(ou_)?error_type$/, iuErr: /^sensor\.espaltherma_iu_error_type$/,
   defrost: /^binary_sensor\.espaltherma_defrost_operation$/,
   // two-zone units: the mixed zone's temperature after its valve, its pump, the direct zone's pump and target
   mixed: /^sensor\.espaltherma_mixed_water_temp/, mainPump: /^binary_sensor\.espaltherma_main_pump$/,
@@ -32,15 +34,19 @@ const I18N = {"fr":{"3-way valve":"Vanne 3 voies","Aims for {n} °C":"Vise {n} �
 // Texts of the dashboard that the web page does not have
 const OWN = {
   fr: {"Mode": "Mode", "Error": "Erreur", "Current": "Courant",
+    "Outdoor unit error": "Erreur unité extérieure", "Indoor unit error": "Erreur unité intérieure",
     "Lower the hot water target": "Baisser la consigne d'eau chaude", "Raise the hot water target": "Monter la consigne d'eau chaude",
     "Lower the leaving water target": "Baisser la consigne de départ d'eau", "Raise the leaving water target": "Monter la consigne de départ d'eau"},
   de: {"Mode": "Betriebsart", "Error": "Fehler", "Current": "Strom",
+    "Outdoor unit error": "Fehler Außengerät", "Indoor unit error": "Fehler Innengerät",
     "Lower the hot water target": "Warmwasser-Sollwert senken", "Raise the hot water target": "Warmwasser-Sollwert anheben",
     "Lower the leaving water target": "Vorlauf-Sollwert senken", "Raise the leaving water target": "Vorlauf-Sollwert anheben"},
   it: {"Mode": "Modalità", "Error": "Errore", "Current": "Corrente",
+    "Outdoor unit error": "Errore unità esterna", "Indoor unit error": "Errore unità interna",
     "Lower the hot water target": "Abbassare la temperatura desiderata dell'acqua calda", "Raise the hot water target": "Alzare la temperatura desiderata dell'acqua calda",
     "Lower the leaving water target": "Abbassare la temperatura di mandata desiderata", "Raise the leaving water target": "Alzare la temperatura di mandata desiderata"},
   es: {"Mode": "Modo", "Error": "Error", "Current": "Corriente",
+    "Outdoor unit error": "Error unidad exterior", "Indoor unit error": "Error unidad interior",
     "Lower the hot water target": "Bajar la consigna de agua caliente", "Raise the hot water target": "Subir la consigna de agua caliente",
     "Lower the leaving water target": "Bajar la consigna de impulsión", "Raise the leaving water target": "Subir la consigna de impulsión"},
 };
@@ -369,8 +375,11 @@ class EspalthermaStrategy {
     // Short names: the entities' own start with the device name, which hides what they are
     const name = {out: tr(hass, "Outside"), tank: tr(hass, "Hot water"), inv: tr(hass, "Compressor"), flow: tr(hass, "Flow"),
       bar: tr(hass, "Water pressure"), mode: tr(hass, "Mode"), err: tr(hass, "Error"), lw2: tr(hass, "Leaving"),
-      lw1: tr(hass, "Heat pump out"), inlet: tr(hass, "Return"), amp: tr(hass, "Current"), mixed: tr(hass, "Mixed water")};
-    const tiles = ["out", "tank", "inv", "flow", "bar", "mode", "err"].filter(has)
+      lw1: tr(hass, "Heat pump out"), inlet: tr(hass, "Return"), amp: tr(hass, "Current"), mixed: tr(hass, "Mixed water"),
+      iuErr: tr(hass, "Indoor unit error")};
+    // Both units' errors (ESPAltherma tells them apart since #617): one tile each, named after their unit
+    if (has("err") && has("iuErr")) name.err = tr(hass, "Outdoor unit error");
+    const tiles = ["out", "tank", "inv", "flow", "bar", "mode", "err", "iuErr"].filter(has)
       .map(k => ({type: "tile", entity: ent[k], name: name[k], grid_options: {columns: 6}}));
     // The targets, with their own buttons, when the heat pump accepts them
     if (has("lwtSet"))
