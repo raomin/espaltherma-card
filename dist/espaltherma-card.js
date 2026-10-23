@@ -6,11 +6,12 @@ const VERSION = "1.0.12";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
-// the leaving water (and the Hybrid the room temperature)
+// the leaving water (and the Hybrid the room temperature), the ECH2O ones the water temperatures ("[HPSU] Tv inflow
+// Temp (R1T)", "[HPSU] Tvbh inflow Temp after Buffer/BUH (R2T)", "[HPSU] Tr return Temp (R4T)")
 const FIND = {
-  out: /^sensor\.espaltherma_.*outdoor_air_temp/, lw1: /^sensor\.espaltherma_(leaving_water_temp_before_buh|outlet_water_temp|outlet_water_heat_exch_temp)/,
-  lw2: /^sensor\.espaltherma_(leaving_water_temp_after_buh|outlet_water_buh_temp)/, r3t: /^sensor\.espaltherma_refrig_temp_liquid_side/,
-  inlet: /^sensor\.espaltherma_inlet_water_temp/, tank: /^sensor\.espaltherma_dhw_tank_temp/,
+  out: /^sensor\.espaltherma_.*outdoor_air_temp/, lw1: /^sensor\.espaltherma_(leaving_water_temp_before_buh|outlet_water_temp|outlet_water_heat_exch_temp|hpsu_tv_inflow_temp)/,
+  lw2: /^sensor\.espaltherma_(leaving_water_temp_after_buh|outlet_water_buh_temp|hpsu_tvbh_inflow_temp)/, r3t: /^sensor\.espaltherma_refrig_temp_liquid_side/,
+  inlet: /^sensor\.espaltherma_(inlet_water_temp|hpsu_tr_return_temp)/, tank: /^sensor\.espaltherma_dhw_tank_temp/,
   room: /^sensor\.espaltherma_(indoor_ambient_temp|rt_temp$)/, dhwSp: /^sensor\.espaltherma_dhw_setpoint$/,
   lwSp: /^sensor\.espaltherma_lw_setpoint_main/, rtSp: /^sensor\.espaltherma_rt_setpoint$/,
   inv: /^sensor\.espaltherma_inv_frequency/, amp: /^sensor\.espaltherma_inv_primary_current/,
