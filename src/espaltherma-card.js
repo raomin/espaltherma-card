@@ -2,7 +2,7 @@
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
 //   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id})
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.13";
+const VERSION = "1.0.14";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -33,23 +33,23 @@ const FIND = {
 const I18N = /*I18N*/{};
 // Texts of the dashboard that the web page does not have
 const OWN = {
-  fr: {"Mode": "Mode", "Error": "Erreur", "Current": "Courant",
+  fr: {"Mode": "Mode", "Error": "Erreur", "Current": "Courant", "Open the web interface": "Ouvrir l'interface web",
     "Outdoor unit error": "Erreur unité extérieure", "Indoor unit error": "Erreur unité intérieure",
     "Lower the hot water target": "Baisser la consigne d'eau chaude", "Raise the hot water target": "Monter la consigne d'eau chaude",
     "Lower the leaving water target": "Baisser la consigne de départ d'eau", "Raise the leaving water target": "Monter la consigne de départ d'eau"},
-  de: {"Mode": "Betriebsart", "Error": "Fehler", "Current": "Strom",
+  de: {"Mode": "Betriebsart", "Error": "Fehler", "Current": "Strom", "Open the web interface": "Weboberfläche öffnen",
     "Outdoor unit error": "Fehler Außengerät", "Indoor unit error": "Fehler Innengerät",
     "Lower the hot water target": "Warmwasser-Sollwert senken", "Raise the hot water target": "Warmwasser-Sollwert anheben",
     "Lower the leaving water target": "Vorlauf-Sollwert senken", "Raise the leaving water target": "Vorlauf-Sollwert anheben"},
-  it: {"Mode": "Modalità", "Error": "Errore", "Current": "Corrente",
+  it: {"Mode": "Modalità", "Error": "Errore", "Current": "Corrente", "Open the web interface": "Aprire l'interfaccia web",
     "Outdoor unit error": "Errore unità esterna", "Indoor unit error": "Errore unità interna",
     "Lower the hot water target": "Abbassare la temperatura desiderata dell'acqua calda", "Raise the hot water target": "Alzare la temperatura desiderata dell'acqua calda",
     "Lower the leaving water target": "Abbassare la temperatura di mandata desiderata", "Raise the leaving water target": "Alzare la temperatura di mandata desiderata"},
-  es: {"Mode": "Modo", "Error": "Error", "Current": "Corriente",
+  es: {"Mode": "Modo", "Error": "Error", "Current": "Corriente", "Open the web interface": "Abrir la interfaz web",
     "Outdoor unit error": "Error unidad exterior", "Indoor unit error": "Error unidad interior",
     "Lower the hot water target": "Bajar la consigna de agua caliente", "Raise the hot water target": "Subir la consigna de agua caliente",
     "Lower the leaving water target": "Bajar la consigna de impulsión", "Raise the leaving water target": "Subir la consigna de impulsión"},
-  nl: {"Mode": "Modus", "Error": "Fout", "Current": "Stroom",
+  nl: {"Mode": "Modus", "Error": "Fout", "Current": "Stroom", "Open the web interface": "Webinterface openen",
     "Lower the hot water target": "Warmwater-setpoint verlagen", "Raise the hot water target": "Warmwater-setpoint verhogen",
     "Lower the leaving water target": "Aanvoer-setpoint verlagen", "Raise the leaving water target": "Aanvoer-setpoint verhogen"},
 };
@@ -97,7 +97,8 @@ const STYLE = `
 :host{--ea-card:var(--ha-card-background,var(--card-background-color,#fff));--ea-ink:var(--primary-text-color);--ea-ink2:var(--secondary-text-color);
 --ea-line:var(--divider-color);--ea-soft:var(--secondary-background-color);--ea-hot:#e0433a;--ea-cold:#2e86de;--ea-refr:#7d8597}
 :host([dark]){--ea-hot:#f2645a;--ea-cold:#4f9cf0;--ea-refr:#979dac}
-ha-card{padding:8px;overflow:hidden}
+ha-card{padding:8px;overflow:hidden;position:relative}
+.lnk{position:absolute;top:10px;right:14px;font-size:12px;color:var(--ea-ink2);text-decoration:none;opacity:.75}.lnk:hover{opacity:1;text-decoration:underline}
 .wrap{overflow-x:auto}
 svg{display:block;width:100%;height:auto;min-width:min(480px,100vw - 32px)} /* fits a phone's width instead of being cut */
 .pipe{fill:none;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;transition:stroke .8s}
@@ -227,7 +228,7 @@ class EspalthermaCard extends HTMLElement {
 
   _build() {
     this._root = this.attachShadow({mode: "open"});
-    this._root.innerHTML = `<style>${STYLE}</style><ha-card${this._config.title ? ` header="${this._config.title}"` : ""}><div class="wrap">${SVG}</div></ha-card>`;
+    this._root.innerHTML = `<style>${STYLE}</style><ha-card${this._config.title ? ` header="${this._config.title}"` : ""}><a class="lnk" id="lnk" target="_blank" rel="noopener" hidden>ESPAltherma ↗</a><div class="wrap">${SVG}</div></ha-card>`;
     const q = s => this._root.querySelector(s);
     q("#tags").innerHTML = TAGS.map(g => `<g class="tag" data-key="${g[1]}" transform="translate(${g[2]},${g[3]})"><rect width="${g[4]}" height="46" rx="14"/><text class="tl" x="12" y="18" style="font-size:11.5px" data-t="${g[0]}"></text><text class="tv" x="12" y="38" id="g_${g[1]}"></text></g>`).join("");
     this._root.querySelectorAll(".pipe").forEach(p => { const c = p.cloneNode(); c.removeAttribute("id"); c.setAttribute("class", "fl"); p.after(c); });
@@ -298,6 +299,11 @@ class EspalthermaCard extends HTMLElement {
     root.querySelectorAll("[data-t]").forEach(n => { n.textContent = tr(hass, n.dataset.t); });
     const st = k => ent[k] && hass.states[ent[k]];
     const n = k => { const s = st(k); const v = s ? parseFloat(s.state) : NaN; return isNaN(v) ? null : v; };
+    // A link to the board's web interface: its address is an attribute of the readings sensor
+    const attrs = Object.keys(hass.states).filter(id => /^sensor\.\w*althermasensors/.test(id)).map(id => hass.states[id].attributes);
+    const ip = (attrs.find(a => a && a.IP) || {}).IP, lnk = q("#lnk");
+    lnk.hidden = !ip;
+    if (ip) { lnk.href = "http://" + ip + "/"; lnk.title = tr(hass, "Open the web interface"); }
     const on = k => { const s = st(k); return s ? s.state === "on" : null; };
     const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
     const deg = v => (v == null ? "—" : f1(v) + "°");
