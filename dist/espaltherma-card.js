@@ -2,7 +2,7 @@
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
 //   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id})
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.12";
+const VERSION = "1.0.13";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
