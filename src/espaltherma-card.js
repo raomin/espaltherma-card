@@ -2,7 +2,7 @@
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
 //   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id})
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.18";
+const VERSION = "1.0.19";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -33,19 +33,19 @@ const FIND = {
 const I18N = /*I18N*/{};
 // Texts of the dashboard that the web page does not have
 const OWN = {
-  fr: {"Mode": "Mode", "Error": "Erreur", "Current": "Courant", "Open the web interface": "Ouvrir l'interface web",
+  fr: {"Mode": "Mode", "Error": "Erreur", "Current": "Courant", "Open the web interface": "Ouvrir l'interface web", "Outdoor unit error": "Erreur unité extérieure", "Indoor unit error": "Erreur unité intérieure",
     "Lower the hot water target": "Baisser la consigne d'eau chaude", "Raise the hot water target": "Monter la consigne d'eau chaude",
     "Lower the leaving water target": "Baisser la consigne de départ d'eau", "Raise the leaving water target": "Monter la consigne de départ d'eau"},
-  de: {"Mode": "Betriebsart", "Error": "Fehler", "Current": "Strom", "Open the web interface": "Weboberfläche öffnen",
+  de: {"Mode": "Betriebsart", "Error": "Fehler", "Current": "Strom", "Open the web interface": "Weboberfläche öffnen", "Outdoor unit error": "Fehler Außengerät", "Indoor unit error": "Fehler Innengerät",
     "Lower the hot water target": "Warmwasser-Sollwert senken", "Raise the hot water target": "Warmwasser-Sollwert anheben",
     "Lower the leaving water target": "Vorlauf-Sollwert senken", "Raise the leaving water target": "Vorlauf-Sollwert anheben"},
-  it: {"Mode": "Modalità", "Error": "Errore", "Current": "Corrente", "Open the web interface": "Aprire l'interfaccia web",
+  it: {"Mode": "Modalità", "Error": "Errore", "Current": "Corrente", "Open the web interface": "Aprire l'interfaccia web", "Outdoor unit error": "Errore unità esterna", "Indoor unit error": "Errore unità interna",
     "Lower the hot water target": "Abbassare la temperatura desiderata dell'acqua calda", "Raise the hot water target": "Alzare la temperatura desiderata dell'acqua calda",
     "Lower the leaving water target": "Abbassare la temperatura di mandata desiderata", "Raise the leaving water target": "Alzare la temperatura di mandata desiderata"},
-  es: {"Mode": "Modo", "Error": "Error", "Current": "Corriente", "Open the web interface": "Abrir la interfaz web",
+  es: {"Mode": "Modo", "Error": "Error", "Current": "Corriente", "Open the web interface": "Abrir la interfaz web", "Outdoor unit error": "Error unidad exterior", "Indoor unit error": "Error unidad interior",
     "Lower the hot water target": "Bajar la consigna de agua caliente", "Raise the hot water target": "Subir la consigna de agua caliente",
     "Lower the leaving water target": "Bajar la consigna de impulsión", "Raise the leaving water target": "Subir la consigna de impulsión"},
-  nl: {"Mode": "Modus", "Error": "Fout", "Current": "Stroom", "Open the web interface": "Webinterface openen",
+  nl: {"Mode": "Modus", "Error": "Fout", "Current": "Stroom", "Open the web interface": "Webinterface openen", "Outdoor unit error": "Fout buitenunit", "Indoor unit error": "Fout binnenunit",
     "Lower the hot water target": "Warmwater-setpoint verlagen", "Raise the hot water target": "Warmwater-setpoint verhogen",
     "Lower the leaving water target": "Aanvoer-setpoint verlagen", "Raise the leaving water target": "Aanvoer-setpoint verhogen"},
 };
@@ -380,15 +380,11 @@ class EspalthermaStrategy {
     const name = {out: tr(hass, "Outside"), tank: tr(hass, "Hot water"), inv: tr(hass, "Compressor"), flow: tr(hass, "Flow"),
       bar: tr(hass, "Water pressure"), mode: tr(hass, "Mode"), err: tr(hass, "Error"), lw2: tr(hass, "Leaving"),
       lw1: tr(hass, "Heat pump out"), inlet: tr(hass, "Return"), amp: tr(hass, "Current"), mixed: tr(hass, "Mixed water"),
-      iuErr: tr(hass, "Error")};
-    const tiles = ["out", "tank", "inv", "flow", "bar", "mode"].filter(has)
+      iuErr: tr(hass, "Indoor unit error")};
+    // Both units' errors (ESPAltherma tells them apart since #617): one tile each, named after their unit
+    if (has("err") && has("iuErr")) name.err = tr(hass, "Outdoor unit error");
+    const tiles = ["out", "tank", "inv", "flow", "bar", "mode", "err", "iuErr"].filter(has)
       .map(k => ({type: "tile", entity: ent[k], name: name[k], grid_options: {columns: 6}}));
-    // The errors: one card with a row per unit when ESPAltherma tells them apart (#617), else the single tile
-    if (has("err") && has("iuErr"))
-      tiles.push({type: "entities", title: tr(hass, "Error"), grid_options: {columns: 6},
-        entities: [{entity: ent.err, name: tr(hass, "Outdoor unit")}, {entity: ent.iuErr, name: tr(hass, "Indoor unit")}]});
-    else
-      ["err", "iuErr"].filter(has).forEach(k => tiles.push({type: "tile", entity: ent[k], name: name[k], grid_options: {columns: 6}}));
     // The targets, with their own buttons, when the heat pump accepts them
     if (has("lwtSet"))
       tiles.unshift({type: "tile", entity: ent.lwtSet, name: tr(hass, "Leaving water target"),
