@@ -2,7 +2,7 @@
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
 //   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id})
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.19";
+const VERSION = "1.0.20";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -304,10 +304,12 @@ class EspalthermaCard extends HTMLElement {
     const deg = v => (v == null ? "—" : f1(v) + "°");
     const tx = (id, s) => { q("#" + id).textContent = s; };
     const clim = this._climate && hass.states[this._climate];
-    for (const [, k] of TAGS) { const v = n(k); tx("g_" + k, k === "flow" ? (v == null ? "—" : f1(Math.max(0, v)) + " l/min") : deg(v)); }
+    // No backup heater (EDLA...W1/V3 monoblocs): its outlet sensor (R2T) reads exactly 0, the leaving water is the heat exchanger's (R1T)
+    const noBuh = n("lw2") === 0 && n("lw1") != null, nv = k => (k === "lw2" && noBuh ? n("lw1") : n(k));
+    for (const [, k] of TAGS) { const v = nv(k); tx("g_" + k, k === "flow" ? (v == null ? "—" : f1(Math.max(0, v)) + " l/min") : deg(v)); }
     // A tank below 0 °C is no tank sensor (an open input reads about -37): the unit has no hot water tank
     const noTank = n("tank") != null && n("tank") < 0;
-    const lw = n("lw2") != null ? n("lw2") : n("lw1"), ret = n("inlet"), tank = noTank ? null : n("tank");
+    const lw = nv("lw2") != null ? nv("lw2") : n("lw1"), ret = n("inlet"), tank = noTank ? null : n("tank");
     const mid = (a, b) => (a != null && b != null ? (a + b) / 2 : a);
     // Two zones (a direct one and a mixed one with its valve, pump and R7T) once the mixed water temperature reads
     // something: single-zone units answer 0 there
