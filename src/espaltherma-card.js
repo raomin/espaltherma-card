@@ -2,7 +2,7 @@
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
 //   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id})
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.17";
+const VERSION = "1.0.18";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -65,7 +65,7 @@ function findEntities(hass, config) {
   const ids = Object.keys(hass.states);
   const e = {};
   // Several ids can match (a renamed value leaves its old entity behind, without a value): prefer a live one
-  const live = id => { const st = hass.states[id].state; return st !== "unknown" && st !== "unavailable" ? 1 : 0; };
+  const live = id => { const st = hass.states[id].state; return st !== "" && st !== "unknown" && st !== "unavailable" ? 1 : 0; };
   for (const [k, re] of Object.entries(FIND)) e[k] = ids.filter(id => re.test(id)).sort((a, b) => live(b) - live(a))[0];
   if (!e.r3t && e.r6t) e.r3t = e.r6t;
   Object.assign(e, (config && config.entities) || {});
