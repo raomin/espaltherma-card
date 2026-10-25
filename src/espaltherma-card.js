@@ -2,7 +2,7 @@
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
 //   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id})
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.20";
+const VERSION = "1.0.21";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -22,7 +22,8 @@ const FIND = {
   mode: /^sensor\.espaltherma_operation_mode$/, err: /^sensor\.espaltherma_(ou_)?error_type$/, iuErr: /^sensor\.espaltherma_iu_error_type$/,
   defrost: /^binary_sensor\.espaltherma_defrost_operation$/,
   // two-zone units: the mixed zone's temperature after its valve, its pump, the direct zone's pump and target
-  mixed: /^sensor\.espaltherma_mixed_water_temp/, mainPump: /^binary_sensor\.espaltherma_main_pump$/,
+  mixed: /^sensor\.espaltherma_mixed_water_temp/, mixedKit: /^sensor\.espaltherma_ekmik_bizone_kit_mixed_leaving_water/,
+  mainPump: /^binary_sensor\.espaltherma_main_pump$/,
   addPump: /^binary_sensor\.espaltherma_add_pump$/, lwSpAdd: /^sensor\.espaltherma_lw_setpoint_add/,
   // the hot water and leaving water targets, when the unit allows setting them (experimental options of ESPAltherma)
   dhwSet: /^number\.[a-z0-9_]*hot_water_target$/, lwtSet: /^number\.[a-z0-9_]*leaving_water_target$/,
@@ -293,6 +294,8 @@ class EspalthermaCard extends HTMLElement {
     root.querySelectorAll("[data-t]").forEach(n => { n.textContent = tr(hass, n.dataset.t); });
     const st = k => ent[k] && hass.states[ent[k]];
     const n = k => { const s = st(k); const v = s ? parseFloat(s.state) : NaN; return isNaN(v) ? null : v; };
+    // A setpoint of exactly 0 is none: the Altherma 4 keeps its targets in the user interface
+    const sp = k => { const v = n(k); return v === 0 ? null : v; };
     // A link to the board's web interface: its address is an attribute of the readings sensor
     // (the AlthermaSensors entity, whatever its id: the one with ESPAltherma's IP and WifiRSSI attributes)
     const withIp = Object.values(hass.states).find(s => s.attributes && s.attributes.IP && s.attributes.WifiRSSI !== undefined);
@@ -313,7 +316,8 @@ class EspalthermaCard extends HTMLElement {
     const mid = (a, b) => (a != null && b != null ? (a + b) / 2 : a);
     // Two zones (a direct one and a mixed one with its valve, pump and R7T) once the mixed water temperature reads
     // something: single-zone units answer 0 there
-    const mixed = n("mixed"), two = mixed != null && mixed !== 0;
+    // The mixed zone's water is the bizone kit's sensor where the kit is fitted (the ECH2O units have no other)
+    const mixedKit = n("mixedKit"), mixed = mixedKit != null && mixedKit !== 0 ? mixedKit : n("mixed"), two = mixed != null && mixed !== 0;
     q("svg").classList.toggle("bizone", two);
     // No hot water tank, no room thermostat: none of their entities (once the heat pump's are there)
     const has = k => !!st(k), unit = ["lw1", "lw2", "inlet", "out"].some(has);
@@ -340,18 +344,18 @@ class EspalthermaCard extends HTMLElement {
     q("#needle").setAttribute("d", `M500 492L${(500 + 11 * Math.sin(a)).toFixed(1)} ${(492 - 11 * Math.cos(a)).toFixed(1)}`);
     tx("sTank", deg(tank));
     const room = clim && clim.attributes.current_temperature != null ? parseFloat(clim.attributes.current_temperature) : n("room");
-    const target = clim && clim.state !== "off" && clim.attributes.temperature != null ? parseFloat(clim.attributes.temperature) : n("rtSp");
+    const target = clim && clim.state !== "off" && clim.attributes.temperature != null ? parseFloat(clim.attributes.temperature) : sp("rtSp");
     tx("sRoom", deg(room)); tx("sRoomB", deg(room));
     const target_ = v => tr(hass, "Target {n}°", {n: Math.round(v * 10) / 10});
     const roomTarget = target != null ? target_(target) : clim && clim.state === "off" ? (hass.formatEntityState ? hass.formatEntityState(clim) : "off") : "";
     tx("sRtSp", roomTarget); tx("sRtSpB", roomTarget);
     // two zones: the direct one upstairs with its water target, the mixed one downstairs with the room
-    tx("sZoneDir", n("lwSpAdd") != null ? target_(n("lwSpAdd")) : "");
+    tx("sZoneDir", sp("lwSpAdd") != null ? target_(sp("lwSpAdd")) : "");
     // Hot water target: the entity that sets it when there is one, otherwise the reading. The buttons appear
     // only when the heat pump accepts a target (ESPAltherma's experimental option).
     const set = st("dhwSet"), dhwShown = this._shown("dhwSet", set);
     q("svg").classList.toggle("cansetdhw", !!set && !isNaN(parseFloat(set.state)));
-    const dhwSp = !isNaN(dhwShown) ? dhwShown : n("dhwSp");
+    const dhwSp = !isNaN(dhwShown) ? dhwShown : sp("dhwSp");
     tx("sDhwSp", dhwSp != null && !isNaN(dhwSp) ? target_(dhwSp) : "");
     this._effective("dhwSet", set, "#sDhwEff", "#vDhwEff", "#tDhwEff");
     if (set) requestAnimationFrame(() => fit(q("#sDhwSp"), 76)); // keeps the text between the two buttons
@@ -359,12 +363,12 @@ class EspalthermaCard extends HTMLElement {
     // On one zone it can be set the same way as the hot water target (the main zone's curve).
     const lwtSet = two ? null : st("lwtSet"), lwtShown = this._shown("lwtSet", lwtSet);
     q("svg").classList.toggle("cansetlwt", !!lwtSet && !isNaN(parseFloat(lwtSet.state)));
-    const lwSpK = two && n("lwSpAdd") != null ? "lwSpAdd" : "lwSp";
-    const lwSp = !isNaN(lwtShown) ? lwtShown : n(lwSpK);
+    const lwSpK = two && sp("lwSpAdd") != null ? "lwSpAdd" : "lwSp";
+    const lwSp = !isNaN(lwtShown) ? lwtShown : sp(lwSpK);
     tx("sLwSp", lwSp != null && !isNaN(lwSp) ? target_(lwSp) : "");
     this._effective("lwtSet", lwtSet, "#sLwtEff", "#vLwtEff", "#tLwtEff");
     if (lwtSet) requestAnimationFrame(() => fit(q("#sLwSp"), 64));
-    tx("sMixed", deg(mixed)); tx("sLwSpMix", n("lwSp") != null ? target_(n("lwSp")) : "");
+    tx("sMixed", deg(mixed)); tx("sLwSpMix", sp("lwSp") != null ? target_(sp("lwSp")) : "");
   }
 
   getCardSize() { return 7; }
