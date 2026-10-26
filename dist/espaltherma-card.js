@@ -2,7 +2,7 @@
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
 //   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id})
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.21";
+const VERSION = "1.0.22";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -10,11 +10,11 @@ const VERSION = "1.0.21";
 // Temp (R1T)", "[HPSU] Tvbh inflow Temp after Buffer/BUH (R2T)", "[HPSU] Tr return Temp (R4T)")
 const FIND = {
   out: /^sensor\.espaltherma_.*outdoor_air_temp/, lw1: /^sensor\.espaltherma_(leaving_water_temp_before_buh|outlet_water_temp|outlet_water_heat_exch_temp|hpsu_tv_inflow_temp)/,
-  lw2: /^sensor\.espaltherma_(leaving_water_temp_after_buh|outlet_water_buh_temp|hpsu_tvbh_inflow_temp)/, r3t: /^sensor\.espaltherma_refrig_temp_liquid_side/,
+  lw2: /^sensor\.espaltherma_(leaving_water_temp_after_buh|outlet_water_buh_temp|hpsu_tvbh_inflow_temp|leaving_water_temp_hydrobox)/, r3t: /^sensor\.espaltherma_refrig_temp_liquid_side/,
   inlet: /^sensor\.espaltherma_(inlet_water_temp|hpsu_tr_return_temp)/, tank: /^sensor\.espaltherma_dhw_tank_temp/,
   room: /^sensor\.espaltherma_(indoor_ambient_temp|rt_temp$)/, dhwSp: /^sensor\.espaltherma_dhw_setpoint$/,
   lwSp: /^sensor\.espaltherma_lw_setpoint_main/, rtSp: /^sensor\.espaltherma_rt_setpoint$/,
-  inv: /^sensor\.espaltherma_inv_frequency/, amp: /^sensor\.espaltherma_inv_primary_current/,
+  inv: /^sensor\.espaltherma_inv_frequency/, invHz: /^sensor\.espaltherma_inv_comp_frequency/, amp: /^sensor\.espaltherma_inv_primary_current/,
   v3: /^binary_sensor\.espaltherma_(3way_valve|priority_to_domestic_water)/, pump: /^binary_sensor\.espaltherma_water_pump_operation/,
   flow: /^sensor\.espaltherma_flow_sensor/, bar: /^sensor\.espaltherma_water_pressure$/,
   // "Error type" of the outdoor unit, named "O/U Error type" once told apart from the indoor unit's "I/U Error type"
@@ -328,12 +328,14 @@ class EspalthermaCard extends HTMLElement {
       .forEach(([id, v]) => { q("#" + id).style.stroke = tcol(v, dark); });
     q("#gDirect").classList.toggle("zoff", on("addPump") === false); q("#gMixed").classList.toggle("zoff", on("mainPump") === false);
     q("#tankFill").style.fill = tcol(tank, dark);
-    const v3 = on("v3"), flow = n("flow"), pump = on("pump") || (flow || 0) > 0.5, inv = n("inv");
+    // the Altherma HT reports its compressor as an inverter frequency in Hz
+    const v3 = on("v3"), flow = n("flow"), pump = on("pump") || (flow || 0) > 0.5, inv = n("inv") != null ? n("inv") : n("invHz");
+    const invU = n("inv") == null && n("invHz") != null ? "Hz" : "rps";
     const svg = q("svg");
     q("#gDhw").classList.toggle("act", !!v3); q("#gSp").classList.toggle("act", !v3);
     q("#vR").classList.toggle("shut", !v3); q("#vB").classList.toggle("shut", !!v3);
     svg.classList.toggle("flowing", !!pump); svg.classList.toggle("comp", inv > 0); svg.classList.toggle("fanon", inv > 0);
-    tx("sInv", inv == null ? "" : inv > 0 ? inv + " rps" : tr(hass, "Resting"));
+    tx("sInv", inv == null ? "" : inv > 0 ? inv + " " + invU : tr(hass, "Resting"));
     // measured once displayed: a text not on screen yet has no width
     requestAnimationFrame(() => { fit(q("#lComp"), 70); fit(q("#sInv"), 70); });
     tx("sV3", v3 == null ? "" : v3 ? tr(hass, "to the hot water") : tr(hass, "to the house"));
