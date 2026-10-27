@@ -63,6 +63,7 @@ Options:
 | `climate` | `climate.altherma`, or the first climate entity named after Altherma, Daikin or a heat pump (a room one first; the Daikin app's "leaving water offset" ones are skipped) | the thermostat shown in the house |
 | `entities` | found by their ESPAltherma ids | override one value, e.g. `entities: {out: sensor.my_outdoor_temp}` |
 | `title` | none | card title |
+| `stats` | `true` | the day's figures under the drawing (COP, energies, compressor cycles), when ESPAltherma computes them (Settings → Energy and cycles) |
 
 Keys of `entities`:
 
@@ -90,6 +91,10 @@ Keys of `entities`:
 | `bar` | water pressure |
 | `mode` | operation mode |
 | `err` | error type |
+| `cop`, `heatKw`, `elecKw` | ESPAltherma's COP, heat output and electrical input of the moment |
+| `copHeat`, `heatHeat`, `elecHeat` | the day's heating COP, heat and electricity |
+| `copDhw`, `heatDhw`, `elecDhw` | the same for hot water |
+| `starts`, `startsHour`, `runMin`, `lastRun`, `lastPause`, `defrosts` | the compressor cycles of the day |
 
 ## Thermostat
 
