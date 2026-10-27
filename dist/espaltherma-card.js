@@ -2,7 +2,7 @@
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
 //   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id}, stats: top | bottom | false)
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.24";
+const VERSION = "1.0.25";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -143,7 +143,7 @@ svg.bizone #gLwtSet{display:none}
 .today{display:none;position:relative;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 20px;margin:6px 10px 2px;padding-right:26px;border-top:1px solid var(--ea-line);font-family:var(--paper-font-body1_-_font-family,sans-serif)}
 .today.on{display:grid}
 ha-card.stats-top .today{order:-1;border-top:0;border-bottom:1px solid var(--ea-line);margin:28px 10px 6px}
-.today .flip{position:absolute;right:-4px;top:6px;width:26px;height:26px;padding:0;border:0;border-radius:8px;background:transparent;color:var(--ea-ink2);cursor:pointer;opacity:.45}.today .flip:hover{opacity:1;background:var(--ea-soft)}.today .flip svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.today .flip{position:absolute;right:-4px;top:6px;width:26px;height:26px;padding:0;border:0;border-radius:8px;background:var(--ea-soft);color:var(--ea-ink);cursor:pointer;opacity:.8}.today .flip:hover{opacity:1}.today .flip svg{display:block;width:18px;height:18px;min-width:0;margin:auto;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round} /* min-width: the drawing's svg rule reaches it */
 .today>div{padding:10px 0 8px;cursor:pointer}
 .today .k{font-size:12px;font-weight:600;color:var(--ea-ink2)}
 .today .v{font-size:24px;font-weight:600;color:var(--ea-ink);line-height:1.15;margin-top:2px}.today .v small{font-size:12px;font-weight:500;color:var(--ea-ink2);margin-left:4px}
