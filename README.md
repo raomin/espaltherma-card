@@ -63,7 +63,7 @@ Options:
 | `climate` | `climate.altherma`, or the first climate entity named after Altherma, Daikin or a heat pump (a room one first; the Daikin app's "leaving water offset" ones are skipped) | the thermostat shown in the house |
 | `entities` | found by their ESPAltherma ids | override one value, e.g. `entities: {out: sensor.my_outdoor_temp}` |
 | `title` | none | card title |
-| `stats` | `true` | the day's figures under the drawing (COP, energies, compressor cycles), when ESPAltherma computes them (Settings → Energy and cycles) |
+| `stats` | `bottom` | the day's figures (COP, energies, compressor cycles), when ESPAltherma computes them (Settings → Energy and cycles): `bottom` or `top` of the drawing, `false` hides them. The arrow on the strip moves it too, and the browser remembers that choice |
 
 Keys of `entities`:
 

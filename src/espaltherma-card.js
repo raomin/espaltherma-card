@@ -1,8 +1,8 @@
 // ESPAltherma card and dashboard for Home Assistant: the live drawing of the heating installation of the
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
-//   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id})
+//   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id}, stats: top | bottom | false)
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.23";
+const VERSION = "1.0.24";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -42,19 +42,19 @@ const FIND = {
 const I18N = /*I18N*/{};
 // Texts of the dashboard that the web page does not have
 const OWN = {
-  fr: {"Mode": "Mode", "Error": "Erreur", "Current": "Courant", "Heat output": "Chaleur fournie", "Electrical input": "Électricité absorbée", "Energy today": "Énergie du jour", "Heat, heating": "Chaleur, chauffage", "Electricity, heating": "Électricité, chauffage", "Heat, hot water": "Chaleur, eau chaude", "Electricity, hot water": "Électricité, eau chaude", "Starts today": "Démarrages du jour", "Open the web interface": "Ouvrir l'interface web", "Outdoor unit error": "Erreur unité extérieure", "Indoor unit error": "Erreur unité intérieure",
+  fr: {"Mode": "Mode", "Error": "Erreur", "Current": "Courant", "Show above the drawing": "Afficher au-dessus du schéma", "Show below the drawing": "Afficher sous le schéma", "Heat output": "Chaleur fournie", "Electrical input": "Électricité absorbée", "Energy today": "Énergie du jour", "Heat, heating": "Chaleur, chauffage", "Electricity, heating": "Électricité, chauffage", "Heat, hot water": "Chaleur, eau chaude", "Electricity, hot water": "Électricité, eau chaude", "Starts today": "Démarrages du jour", "Open the web interface": "Ouvrir l'interface web", "Outdoor unit error": "Erreur unité extérieure", "Indoor unit error": "Erreur unité intérieure",
     "Lower the hot water target": "Baisser la consigne d'eau chaude", "Raise the hot water target": "Monter la consigne d'eau chaude",
     "Lower the leaving water target": "Baisser la consigne de départ d'eau", "Raise the leaving water target": "Monter la consigne de départ d'eau"},
-  de: {"Mode": "Betriebsart", "Error": "Fehler", "Current": "Strom", "Heat output": "Wärmeleistung", "Electrical input": "Stromaufnahme", "Energy today": "Energie heute", "Heat, heating": "Wärme, Heizen", "Electricity, heating": "Strom, Heizen", "Heat, hot water": "Wärme, Warmwasser", "Electricity, hot water": "Strom, Warmwasser", "Starts today": "Starts heute", "Open the web interface": "Weboberfläche öffnen", "Outdoor unit error": "Fehler Außengerät", "Indoor unit error": "Fehler Innengerät",
+  de: {"Mode": "Betriebsart", "Error": "Fehler", "Current": "Strom", "Show above the drawing": "Über der Zeichnung anzeigen", "Show below the drawing": "Unter der Zeichnung anzeigen", "Heat output": "Wärmeleistung", "Electrical input": "Stromaufnahme", "Energy today": "Energie heute", "Heat, heating": "Wärme, Heizen", "Electricity, heating": "Strom, Heizen", "Heat, hot water": "Wärme, Warmwasser", "Electricity, hot water": "Strom, Warmwasser", "Starts today": "Starts heute", "Open the web interface": "Weboberfläche öffnen", "Outdoor unit error": "Fehler Außengerät", "Indoor unit error": "Fehler Innengerät",
     "Lower the hot water target": "Warmwasser-Sollwert senken", "Raise the hot water target": "Warmwasser-Sollwert anheben",
     "Lower the leaving water target": "Vorlauf-Sollwert senken", "Raise the leaving water target": "Vorlauf-Sollwert anheben"},
-  it: {"Mode": "Modalità", "Error": "Errore", "Current": "Corrente", "Heat output": "Calore fornito", "Electrical input": "Elettricità assorbita", "Energy today": "Energia di oggi", "Heat, heating": "Calore, riscaldamento", "Electricity, heating": "Elettricità, riscaldamento", "Heat, hot water": "Calore, acqua calda", "Electricity, hot water": "Elettricità, acqua calda", "Starts today": "Avvii di oggi", "Open the web interface": "Aprire l'interfaccia web", "Outdoor unit error": "Errore unità esterna", "Indoor unit error": "Errore unità interna",
+  it: {"Mode": "Modalità", "Error": "Errore", "Current": "Corrente", "Show above the drawing": "Mostra sopra lo schema", "Show below the drawing": "Mostra sotto lo schema", "Heat output": "Calore fornito", "Electrical input": "Elettricità assorbita", "Energy today": "Energia di oggi", "Heat, heating": "Calore, riscaldamento", "Electricity, heating": "Elettricità, riscaldamento", "Heat, hot water": "Calore, acqua calda", "Electricity, hot water": "Elettricità, acqua calda", "Starts today": "Avvii di oggi", "Open the web interface": "Aprire l'interfaccia web", "Outdoor unit error": "Errore unità esterna", "Indoor unit error": "Errore unità interna",
     "Lower the hot water target": "Abbassare la temperatura desiderata dell'acqua calda", "Raise the hot water target": "Alzare la temperatura desiderata dell'acqua calda",
     "Lower the leaving water target": "Abbassare la temperatura di mandata desiderata", "Raise the leaving water target": "Alzare la temperatura di mandata desiderata"},
-  es: {"Mode": "Modo", "Error": "Error", "Current": "Corriente", "Heat output": "Calor entregado", "Electrical input": "Electricidad consumida", "Energy today": "Energía de hoy", "Heat, heating": "Calor, calefacción", "Electricity, heating": "Electricidad, calefacción", "Heat, hot water": "Calor, agua caliente", "Electricity, hot water": "Electricidad, agua caliente", "Starts today": "Arranques de hoy", "Open the web interface": "Abrir la interfaz web", "Outdoor unit error": "Error unidad exterior", "Indoor unit error": "Error unidad interior",
+  es: {"Mode": "Modo", "Error": "Error", "Current": "Corriente", "Show above the drawing": "Mostrar encima del esquema", "Show below the drawing": "Mostrar debajo del esquema", "Heat output": "Calor entregado", "Electrical input": "Electricidad consumida", "Energy today": "Energía de hoy", "Heat, heating": "Calor, calefacción", "Electricity, heating": "Electricidad, calefacción", "Heat, hot water": "Calor, agua caliente", "Electricity, hot water": "Electricidad, agua caliente", "Starts today": "Arranques de hoy", "Open the web interface": "Abrir la interfaz web", "Outdoor unit error": "Error unidad exterior", "Indoor unit error": "Error unidad interior",
     "Lower the hot water target": "Bajar la consigna de agua caliente", "Raise the hot water target": "Subir la consigna de agua caliente",
     "Lower the leaving water target": "Bajar la consigna de impulsión", "Raise the leaving water target": "Subir la consigna de impulsión"},
-  nl: {"Mode": "Modus", "Error": "Fout", "Current": "Stroom", "Heat output": "Geleverde warmte", "Electrical input": "Opgenomen elektriciteit", "Energy today": "Energie vandaag", "Heat, heating": "Warmte, verwarmen", "Electricity, heating": "Elektriciteit, verwarmen", "Heat, hot water": "Warmte, warm water", "Electricity, hot water": "Elektriciteit, warm water", "Starts today": "Starts vandaag", "Open the web interface": "Webinterface openen", "Outdoor unit error": "Fout buitenunit", "Indoor unit error": "Fout binnenunit",
+  nl: {"Mode": "Modus", "Error": "Fout", "Current": "Stroom", "Show above the drawing": "Boven de tekening tonen", "Show below the drawing": "Onder de tekening tonen", "Heat output": "Geleverde warmte", "Electrical input": "Opgenomen elektriciteit", "Energy today": "Energie vandaag", "Heat, heating": "Warmte, verwarmen", "Electricity, heating": "Elektriciteit, verwarmen", "Heat, hot water": "Warmte, warm water", "Electricity, hot water": "Elektriciteit, warm water", "Starts today": "Starts vandaag", "Open the web interface": "Webinterface openen", "Outdoor unit error": "Fout buitenunit", "Indoor unit error": "Fout binnenunit",
     "Lower the hot water target": "Warmwater-setpoint verlagen", "Raise the hot water target": "Warmwater-setpoint verhogen",
     "Lower the leaving water target": "Aanvoer-setpoint verlagen", "Raise the leaving water target": "Aanvoer-setpoint verhogen"},
 };
@@ -104,7 +104,7 @@ const STYLE = `
 :host{--ea-card:var(--ha-card-background,var(--card-background-color,#fff));--ea-ink:var(--primary-text-color);--ea-ink2:var(--secondary-text-color);
 --ea-line:var(--divider-color);--ea-soft:var(--secondary-background-color);--ea-soft:color-mix(in srgb,var(--ea-ink) 7%,var(--ea-card));--ea-hot:#e0433a;--ea-cold:#2e86de;--ea-refr:#7d8597}
 :host([dark]){--ea-hot:#f2645a;--ea-cold:#4f9cf0;--ea-refr:#979dac}
-ha-card{padding:8px;overflow:hidden;position:relative}
+ha-card{padding:8px;overflow:hidden;position:relative;display:flex;flex-direction:column}
 .lnk{position:absolute;top:10px;right:14px;font-size:12px;color:var(--ea-ink2);text-decoration:none;opacity:.75}.lnk:hover{opacity:1;text-decoration:underline}
 .wrap{overflow-x:auto}
 svg{display:block;width:100%;height:auto;min-width:min(480px,100vw - 32px)} /* fits a phone's width instead of being cut */
@@ -140,8 +140,10 @@ svg.bizone #gLwtSet{display:none}
 .comp #comp{fill:var(--primary-color);stroke:var(--primary-color)}
 .sens{fill:var(--ea-ink2)}
 @media (prefers-reduced-motion:reduce){.flowing .act .fl,#fan{animation:none!important}}
-.today{display:none;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 20px;margin:6px 10px 2px;border-top:1px solid var(--ea-line);font-family:var(--paper-font-body1_-_font-family,sans-serif)}
+.today{display:none;position:relative;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 20px;margin:6px 10px 2px;padding-right:26px;border-top:1px solid var(--ea-line);font-family:var(--paper-font-body1_-_font-family,sans-serif)}
 .today.on{display:grid}
+ha-card.stats-top .today{order:-1;border-top:0;border-bottom:1px solid var(--ea-line);margin:28px 10px 6px}
+.today .flip{position:absolute;right:-4px;top:6px;width:26px;height:26px;padding:0;border:0;border-radius:8px;background:transparent;color:var(--ea-ink2);cursor:pointer;opacity:.45}.today .flip:hover{opacity:1;background:var(--ea-soft)}.today .flip svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .today>div{padding:10px 0 8px;cursor:pointer}
 .today .k{font-size:12px;font-weight:600;color:var(--ea-ink2)}
 .today .v{font-size:24px;font-weight:600;color:var(--ea-ink);line-height:1.15;margin-top:2px}.today .v small{font-size:12px;font-weight:500;color:var(--ea-ink2);margin-left:4px}
@@ -246,6 +248,13 @@ class EspalthermaCard extends HTMLElement {
       const path = ev.composedPath();
       const b = path.find(n => n.dataset && n.dataset.act);
       if (b) { this._nudge(b.dataset.act.slice(0, 3) + "Set", b.dataset.act.endsWith("+") ? 1 : -1); return; }
+      if (path.some(n => n.classList && n.classList.contains("flip"))) {
+        const top = !q("ha-card").classList.contains("stats-top");
+        try { localStorage.setItem("espaltherma-card-stats", top ? "top" : "bottom"); } catch (e) {}
+        this._todayHtml = null;
+        this._paint();
+        return;
+      }
       const g = path.find(n => n.dataset && n.dataset.key);
       if (!g) return;
       const k = g.dataset.key;
@@ -394,6 +403,11 @@ class EspalthermaCard extends HTMLElement {
     const show = this._config.stats !== false && ["cop", "heatHeat", "starts"].some(has);
     box.classList.toggle("on", show);
     if (!show) return;
+    // above or below the drawing: the arrow's choice, kept by the browser, else the option (stats: top)
+    let pos = null;
+    try { pos = localStorage.getItem("espaltherma-card-stats"); } catch (e) {}
+    const top = pos ? pos === "top" : this._config.stats === "top";
+    q("ha-card").classList.toggle("stats-top", top);
     const f = (v, d) => (v == null ? "—" : v.toFixed(d));
     const kwh = v => (v == null ? "0" : f(v, v < 10 ? 1 : 0));
     const mins = m => (m >= 60 ? tr(hass, "{h} h {m} min", {h: Math.floor(m / 60), m: Math.round(m % 60)}) : tr(hass, "{m} min", {m: Math.round(m)}));
@@ -410,6 +424,7 @@ class EspalthermaCard extends HTMLElement {
     if (has("lastRun")) h += fig("lastRun", tr(hass, "Last cycle"), n("lastRun") > 0 ? mins(n("lastRun")) : "—", "",
       n("lastPause") > 0 ? tr(hass, "then {t} off", {t: mins(n("lastPause"))}) : "");
     if (n("defrosts") > 0) h += fig("defrosts", tr(hass, "Defrosts"), f(n("defrosts"), 0), "", "");
+    h += `<button class="flip" type="button" title="${tr(hass, top ? "Show below the drawing" : "Show above the drawing")}"><svg viewBox="0 0 24 24"><path d="${top ? "M6 9l6 6 6-6" : "M6 15l6-6 6 6"}"/></svg></button>`;
     if (h !== this._todayHtml) { box.innerHTML = h; this._todayHtml = h; }
   }
 
