@@ -62,6 +62,7 @@ Options:
 | --- | --- | --- |
 | `climate` | `climate.altherma`, or the first climate entity named after Altherma, Daikin or a heat pump (a room one first; the Daikin app's "leaving water offset" ones are skipped) | the thermostat shown in the house |
 | `entities` | found by their ESPAltherma ids | override one value, e.g. `entities: {out: sensor.my_outdoor_temp}` |
+| `prefix` | `espaltherma` | the board's base topic when it is not the default, as it appears in its entity ids: `prefix: espaltherma_odu` for a board on the base topic `espaltherma-odu`. With two boards, take the other one's values through `entities` |
 | `title` | none | card title |
 | `stats` | `bottom` | the day's figures (COP, energies, compressor cycles), when ESPAltherma computes them (Settings → Energy and cycles): `bottom` or `top` of the drawing, `false` hides them. The arrow on the strip moves it too, and the browser remembers that choice |
 

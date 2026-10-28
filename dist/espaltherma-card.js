@@ -1,8 +1,8 @@
 // ESPAltherma card and dashboard for Home Assistant: the live drawing of the heating installation of the
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
-//   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id}, stats: top | bottom | false)
+//   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id}, prefix, stats: top | bottom | false)
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.25";
+const VERSION = "1.0.26";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -22,13 +22,17 @@ const FIND = {
   mode: /^sensor\.espaltherma_operation_mode$/, err: /^sensor\.espaltherma_(ou_)?error_type$/, iuErr: /^sensor\.espaltherma_iu_error_type$/,
   defrost: /^binary_sensor\.espaltherma_defrost_operation$/,
   // two-zone units: the mixed zone's temperature after its valve, its pump, the direct zone's pump and target
-  mixed: /^sensor\.espaltherma_mixed_water_temp/, mixedKit: /^sensor\.espaltherma_ekmik_bizone_kit_mixed_leaving_water/,
+  mixed: /^sensor\.espaltherma_mixed_water_temp/, mixedKit: /^sensor\.espaltherma_(ekmik_bizone_kit_mixed_leaving_water|hpsu_mixed_leaving_water_temperature_after_the_tank)/,
+  // an ECH2O unit (its [HPSU] values): the Daikin board's "Mixed water temp." and room values are not its own
+  hpsu: /^sensor\.espaltherma_hpsu_/,
   mainPump: /^binary_sensor\.espaltherma_main_pump$/,
   addPump: /^binary_sensor\.espaltherma_add_pump$/, lwSpAdd: /^sensor\.espaltherma_lw_setpoint_add/,
   // the hot water and leaving water targets, when the unit allows setting them (experimental options of ESPAltherma)
   dhwSet: /^number\.[a-z0-9_]*hot_water_target$/, lwtSet: /^number\.[a-z0-9_]*leaving_water_target$/,
   // the Altherma 4 has its refrigerant liquid side in the outdoor unit: the liquid pipe, when there is no R3T
   r6t: /^sensor\.espaltherma_liquid_pipe_tempr6t/,
+  // the firmware update entity: on when the ESPAltherma site has a newer build (the board's daily check)
+  fwUpdate: /^update\.espaltherma_firmware$/,
   // the energy and cycle figures ESPAltherma computes (its "Stats:" entities, from 2.0)
   cop: /^sensor\.espaltherma_stats_cop_estimated$/, heatKw: /^sensor\.espaltherma_stats_heat_output_kw$/, elecKw: /^sensor\.espaltherma_stats_electrical_input_estimated_kw$/,
   copHeat: /^sensor\.espaltherma_stats_cop_today_heating$/, copDhw: /^sensor\.espaltherma_stats_cop_today_hot_water$/,
@@ -44,19 +48,19 @@ const I18N = {"fr":{"3-way valve":"Vanne 3 voies","Aims for {n} °C":"Vise {n} �
 const OWN = {
   fr: {"Mode": "Mode", "Error": "Erreur", "Current": "Courant", "Show above the drawing": "Afficher au-dessus du schéma", "Show below the drawing": "Afficher sous le schéma", "Heat output": "Chaleur fournie", "Electrical input": "Électricité absorbée", "Energy today": "Énergie du jour", "Heat, heating": "Chaleur, chauffage", "Electricity, heating": "Électricité, chauffage", "Heat, hot water": "Chaleur, eau chaude", "Electricity, hot water": "Électricité, eau chaude", "Starts today": "Démarrages du jour", "Open the web interface": "Ouvrir l'interface web", "Outdoor unit error": "Erreur unité extérieure", "Indoor unit error": "Erreur unité intérieure",
     "Lower the hot water target": "Baisser la consigne d'eau chaude", "Raise the hot water target": "Monter la consigne d'eau chaude",
-    "Lower the leaving water target": "Baisser la consigne de départ d'eau", "Raise the leaving water target": "Monter la consigne de départ d'eau"},
+    "Lower the leaving water target": "Baisser la consigne de départ d'eau", "Raise the leaving water target": "Monter la consigne de départ d'eau", "Update {v} available": "Mise à jour {v} disponible"},
   de: {"Mode": "Betriebsart", "Error": "Fehler", "Current": "Strom", "Show above the drawing": "Über der Zeichnung anzeigen", "Show below the drawing": "Unter der Zeichnung anzeigen", "Heat output": "Wärmeleistung", "Electrical input": "Stromaufnahme", "Energy today": "Energie heute", "Heat, heating": "Wärme, Heizen", "Electricity, heating": "Strom, Heizen", "Heat, hot water": "Wärme, Warmwasser", "Electricity, hot water": "Strom, Warmwasser", "Starts today": "Starts heute", "Open the web interface": "Weboberfläche öffnen", "Outdoor unit error": "Fehler Außengerät", "Indoor unit error": "Fehler Innengerät",
     "Lower the hot water target": "Warmwasser-Sollwert senken", "Raise the hot water target": "Warmwasser-Sollwert anheben",
-    "Lower the leaving water target": "Vorlauf-Sollwert senken", "Raise the leaving water target": "Vorlauf-Sollwert anheben"},
+    "Lower the leaving water target": "Vorlauf-Sollwert senken", "Raise the leaving water target": "Vorlauf-Sollwert anheben", "Update {v} available": "Update {v} verfügbar"},
   it: {"Mode": "Modalità", "Error": "Errore", "Current": "Corrente", "Show above the drawing": "Mostra sopra lo schema", "Show below the drawing": "Mostra sotto lo schema", "Heat output": "Calore fornito", "Electrical input": "Elettricità assorbita", "Energy today": "Energia di oggi", "Heat, heating": "Calore, riscaldamento", "Electricity, heating": "Elettricità, riscaldamento", "Heat, hot water": "Calore, acqua calda", "Electricity, hot water": "Elettricità, acqua calda", "Starts today": "Avvii di oggi", "Open the web interface": "Aprire l'interfaccia web", "Outdoor unit error": "Errore unità esterna", "Indoor unit error": "Errore unità interna",
     "Lower the hot water target": "Abbassare la temperatura desiderata dell'acqua calda", "Raise the hot water target": "Alzare la temperatura desiderata dell'acqua calda",
-    "Lower the leaving water target": "Abbassare la temperatura di mandata desiderata", "Raise the leaving water target": "Alzare la temperatura di mandata desiderata"},
+    "Lower the leaving water target": "Abbassare la temperatura di mandata desiderata", "Raise the leaving water target": "Alzare la temperatura di mandata desiderata", "Update {v} available": "Aggiornamento {v} disponibile"},
   es: {"Mode": "Modo", "Error": "Error", "Current": "Corriente", "Show above the drawing": "Mostrar encima del esquema", "Show below the drawing": "Mostrar debajo del esquema", "Heat output": "Calor entregado", "Electrical input": "Electricidad consumida", "Energy today": "Energía de hoy", "Heat, heating": "Calor, calefacción", "Electricity, heating": "Electricidad, calefacción", "Heat, hot water": "Calor, agua caliente", "Electricity, hot water": "Electricidad, agua caliente", "Starts today": "Arranques de hoy", "Open the web interface": "Abrir la interfaz web", "Outdoor unit error": "Error unidad exterior", "Indoor unit error": "Error unidad interior",
     "Lower the hot water target": "Bajar la consigna de agua caliente", "Raise the hot water target": "Subir la consigna de agua caliente",
-    "Lower the leaving water target": "Bajar la consigna de impulsión", "Raise the leaving water target": "Subir la consigna de impulsión"},
+    "Lower the leaving water target": "Bajar la consigna de impulsión", "Raise the leaving water target": "Subir la consigna de impulsión", "Update {v} available": "Actualización {v} disponible"},
   nl: {"Mode": "Modus", "Error": "Fout", "Current": "Stroom", "Show above the drawing": "Boven de tekening tonen", "Show below the drawing": "Onder de tekening tonen", "Heat output": "Geleverde warmte", "Electrical input": "Opgenomen elektriciteit", "Energy today": "Energie vandaag", "Heat, heating": "Warmte, verwarmen", "Electricity, heating": "Elektriciteit, verwarmen", "Heat, hot water": "Warmte, warm water", "Electricity, hot water": "Elektriciteit, warm water", "Starts today": "Starts vandaag", "Open the web interface": "Webinterface openen", "Outdoor unit error": "Fout buitenunit", "Indoor unit error": "Fout binnenunit",
     "Lower the hot water target": "Warmwater-setpoint verlagen", "Raise the hot water target": "Warmwater-setpoint verhogen",
-    "Lower the leaving water target": "Aanvoer-setpoint verlagen", "Raise the leaving water target": "Aanvoer-setpoint verhogen"},
+    "Lower the leaving water target": "Aanvoer-setpoint verlagen", "Raise the leaving water target": "Aanvoer-setpoint verhogen", "Update {v} available": "Update {v} beschikbaar"},
 };
 
 // Shrinks an SVG text to max units wide (translations can be longer than the English the drawing was made for)
@@ -75,7 +79,11 @@ function findEntities(hass, config) {
   const e = {};
   // Several ids can match (a renamed value leaves its old entity behind, without a value): prefer a live one
   const live = id => { const st = hass.states[id].state; return st !== "" && st !== "unknown" && st !== "unavailable" ? 1 : 0; };
-  for (const [k, re] of Object.entries(FIND)) e[k] = ids.filter(id => re.test(id)).sort((a, b) => live(b) - live(a))[0];
+  // A board on another base topic has its ids prefixed with it (espaltherma-odu -> sensor.espaltherma_odu_...):
+  // the prefix option puts that in place of "espaltherma"
+  const prefix = config && config.prefix ? String(config.prefix).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") : "";
+  const own = re => prefix && prefix !== "espaltherma" ? new RegExp(re.source.replace(/espaltherma_/g, prefix + "_")) : re;
+  for (const [k, re] of Object.entries(FIND)) e[k] = ids.filter(id => own(re).test(id)).sort((a, b) => live(b) - live(a))[0];
   if (!e.r3t && e.r6t) e.r3t = e.r6t;
   Object.assign(e, (config && config.entities) || {});
   return e;
@@ -325,6 +333,10 @@ class EspalthermaCard extends HTMLElement {
     const ip = withIp && withIp.attributes.IP, lnk = q("#lnk");
     lnk.hidden = !ip;
     if (ip) { lnk.href = "http://" + ip + "/"; lnk.title = tr(hass, "Open the web interface"); }
+    // A newer firmware on the ESPAltherma site (the board's update entity, from its daily check): said in that link
+    const up = st("fwUpdate"), upOn = !!up && up.state === "on";
+    lnk.textContent = upOn ? tr(hass, "Update {v} available", {v: up.attributes.latest_version}) + " ↗" : "ESPAltherma ↗";
+    if (upOn && !ip) { lnk.hidden = false; lnk.href = "https://github.com/raomin/ESPAltherma/releases"; }
     const on = k => { const s = st(k); return s ? s.state === "on" : null; };
     const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
     const deg = v => (v == null ? "—" : f1(v) + "°");
@@ -340,7 +352,7 @@ class EspalthermaCard extends HTMLElement {
     // Two zones (a direct one and a mixed one with its valve, pump and R7T) once the mixed water temperature reads
     // something: single-zone units answer 0 there
     // The mixed zone's water is the bizone kit's sensor where the kit is fitted (the ECH2O units have no other)
-    const mixedKit = n("mixedKit"), mixed = mixedKit != null && mixedKit !== 0 ? mixedKit : n("mixed"), two = mixed != null && mixed !== 0;
+    const mixedKit = n("mixedKit"), mixed = mixedKit != null && mixedKit !== 0 ? mixedKit : ent.hpsu ? null : n("mixed"), two = mixed != null && mixed !== 0;
     q("svg").classList.toggle("bizone", two);
     // No hot water tank, no room thermostat: none of their entities (once the heat pump's are there)
     const has = k => !!st(k), unit = ["lw1", "lw2", "inlet", "out"].some(has);
@@ -368,8 +380,10 @@ class EspalthermaCard extends HTMLElement {
     const a = (-135 + (bar || 0) / 4 * 270) * Math.PI / 180;
     q("#needle").setAttribute("d", `M500 492L${(500 + 11 * Math.sin(a)).toFixed(1)} ${(492 - 11 * Math.cos(a)).toFixed(1)}`);
     tx("sTank", deg(tank));
-    const room = clim && clim.attributes.current_temperature != null ? parseFloat(clim.attributes.current_temperature) : n("room");
-    const target = clim && clim.state !== "off" && clim.attributes.temperature != null ? parseFloat(clim.attributes.temperature) : sp("rtSp");
+    // On an ECH2O the Daikin board's room temperature and target read a constant 20: the RoCon has the real ones
+    const ownRoom = !!ent.hpsu && n("room") === 20 && (sp("rtSp") == null || sp("rtSp") === 20);
+    const room = clim && clim.attributes.current_temperature != null ? parseFloat(clim.attributes.current_temperature) : ownRoom ? null : n("room");
+    const target = clim && clim.state !== "off" && clim.attributes.temperature != null ? parseFloat(clim.attributes.temperature) : ownRoom ? null : sp("rtSp");
     tx("sRoom", deg(room)); tx("sRoomB", deg(room));
     const target_ = v => tr(hass, "Target {n}°", {n: Math.round(v * 10) / 10});
     const roomTarget = target != null ? target_(target) : clim && clim.state === "off" ? (hass.formatEntityState ? hass.formatEntityState(clim) : "off") : "";
