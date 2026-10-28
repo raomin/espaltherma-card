@@ -56,11 +56,12 @@ To customise it, open the dashboard's ⋮ menu, choose *Take control*, and edit 
 type: custom:espaltherma-card
 ```
 
-Options:
+Options (the card's visual editor in Home Assistant offers them, with pickers for the meter and the thermostat):
 
 | Option | Default | |
 | --- | --- | --- |
 | `climate` | `climate.altherma`, or the first climate entity named after Altherma, Daikin or a heat pump (a room one first; the Daikin app's "leaving water offset" ones are skipped) | the thermostat shown in the house |
+| `power` | none | a power meter of your own on the heat pump (an entity in W or kW): the live COP and the "kW in" come from it instead of ESPAltherma's estimate. The day's figures stay ESPAltherma's |
 | `entities` | found by their ESPAltherma ids | override one value, e.g. `entities: {out: sensor.my_outdoor_temp}` |
 | `prefix` | `espaltherma` | the board's base topic when it is not the default, as it appears in its entity ids: `prefix: espaltherma_odu` for a board on the base topic `espaltherma-odu`. With two boards, take the other one's values through `entities` |
 | `title` | none | card title |

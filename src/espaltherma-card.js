@@ -1,8 +1,9 @@
 // ESPAltherma card and dashboard for Home Assistant: the live drawing of the heating installation of the
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
-//   card:      type: custom:espaltherma-card   (options: climate, entities: {key: entity_id}, prefix, stats: top | bottom | false)
+//   card:      type: custom:espaltherma-card   (options: climate, power, entities: {key: entity_id}, prefix, stats: top | bottom | false;
+//              a visual editor offers them)
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.26";
+const VERSION = "1.0.27";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -48,19 +49,24 @@ const I18N = /*I18N*/{};
 const OWN = {
   fr: {"Mode": "Mode", "Error": "Erreur", "Current": "Courant", "Show above the drawing": "Afficher au-dessus du schéma", "Show below the drawing": "Afficher sous le schéma", "Heat output": "Chaleur fournie", "Electrical input": "Électricité absorbée", "Energy today": "Énergie du jour", "Heat, heating": "Chaleur, chauffage", "Electricity, heating": "Électricité, chauffage", "Heat, hot water": "Chaleur, eau chaude", "Electricity, hot water": "Électricité, eau chaude", "Starts today": "Démarrages du jour", "Open the web interface": "Ouvrir l'interface web", "Outdoor unit error": "Erreur unité extérieure", "Indoor unit error": "Erreur unité intérieure",
     "Lower the hot water target": "Baisser la consigne d'eau chaude", "Raise the hot water target": "Monter la consigne d'eau chaude",
-    "Lower the leaving water target": "Baisser la consigne de départ d'eau", "Raise the leaving water target": "Monter la consigne de départ d'eau", "Update {v} available": "Mise à jour {v} disponible"},
+    "Lower the leaving water target": "Baisser la consigne de départ d'eau", "Raise the leaving water target": "Monter la consigne de départ d'eau", "Update {v} available": "Mise à jour {v} disponible", "from your meter": "d'après votre compteur",
+    "Power meter for the live COP (W or kW)": "Compteur de puissance pour le COP instantané (W ou kW)", "Thermostat": "Thermostat", "Day's figures": "Chiffres du jour", "Title": "Titre", "Entity id prefix (a board on another base topic)": "Préfixe des identifiants d'entité (carte sur un autre topic de base)", "Hidden": "Masqués"},
   de: {"Mode": "Betriebsart", "Error": "Fehler", "Current": "Strom", "Show above the drawing": "Über der Zeichnung anzeigen", "Show below the drawing": "Unter der Zeichnung anzeigen", "Heat output": "Wärmeleistung", "Electrical input": "Stromaufnahme", "Energy today": "Energie heute", "Heat, heating": "Wärme, Heizen", "Electricity, heating": "Strom, Heizen", "Heat, hot water": "Wärme, Warmwasser", "Electricity, hot water": "Strom, Warmwasser", "Starts today": "Starts heute", "Open the web interface": "Weboberfläche öffnen", "Outdoor unit error": "Fehler Außengerät", "Indoor unit error": "Fehler Innengerät",
     "Lower the hot water target": "Warmwasser-Sollwert senken", "Raise the hot water target": "Warmwasser-Sollwert anheben",
-    "Lower the leaving water target": "Vorlauf-Sollwert senken", "Raise the leaving water target": "Vorlauf-Sollwert anheben", "Update {v} available": "Update {v} verfügbar"},
+    "Lower the leaving water target": "Vorlauf-Sollwert senken", "Raise the leaving water target": "Vorlauf-Sollwert anheben", "Update {v} available": "Update {v} verfügbar", "from your meter": "laut Ihrem Zähler",
+    "Power meter for the live COP (W or kW)": "Leistungsmesser für den aktuellen COP (W oder kW)", "Thermostat": "Thermostat", "Day's figures": "Tageswerte", "Title": "Titel", "Entity id prefix (a board on another base topic)": "Präfix der Entitäts-IDs (Board auf einem anderen Basis-Topic)", "Hidden": "Ausgeblendet"},
   it: {"Mode": "Modalità", "Error": "Errore", "Current": "Corrente", "Show above the drawing": "Mostra sopra lo schema", "Show below the drawing": "Mostra sotto lo schema", "Heat output": "Calore fornito", "Electrical input": "Elettricità assorbita", "Energy today": "Energia di oggi", "Heat, heating": "Calore, riscaldamento", "Electricity, heating": "Elettricità, riscaldamento", "Heat, hot water": "Calore, acqua calda", "Electricity, hot water": "Elettricità, acqua calda", "Starts today": "Avvii di oggi", "Open the web interface": "Aprire l'interfaccia web", "Outdoor unit error": "Errore unità esterna", "Indoor unit error": "Errore unità interna",
     "Lower the hot water target": "Abbassare la temperatura desiderata dell'acqua calda", "Raise the hot water target": "Alzare la temperatura desiderata dell'acqua calda",
-    "Lower the leaving water target": "Abbassare la temperatura di mandata desiderata", "Raise the leaving water target": "Alzare la temperatura di mandata desiderata", "Update {v} available": "Aggiornamento {v} disponibile"},
+    "Lower the leaving water target": "Abbassare la temperatura di mandata desiderata", "Raise the leaving water target": "Alzare la temperatura di mandata desiderata", "Update {v} available": "Aggiornamento {v} disponibile", "from your meter": "dal vostro contatore",
+    "Power meter for the live COP (W or kW)": "Misuratore di potenza per il COP istantaneo (W o kW)", "Thermostat": "Termostato", "Day's figures": "Dati del giorno", "Title": "Titolo", "Entity id prefix (a board on another base topic)": "Prefisso degli id delle entità (scheda su un altro topic di base)", "Hidden": "Nascosti"},
   es: {"Mode": "Modo", "Error": "Error", "Current": "Corriente", "Show above the drawing": "Mostrar encima del esquema", "Show below the drawing": "Mostrar debajo del esquema", "Heat output": "Calor entregado", "Electrical input": "Electricidad consumida", "Energy today": "Energía de hoy", "Heat, heating": "Calor, calefacción", "Electricity, heating": "Electricidad, calefacción", "Heat, hot water": "Calor, agua caliente", "Electricity, hot water": "Electricidad, agua caliente", "Starts today": "Arranques de hoy", "Open the web interface": "Abrir la interfaz web", "Outdoor unit error": "Error unidad exterior", "Indoor unit error": "Error unidad interior",
     "Lower the hot water target": "Bajar la consigna de agua caliente", "Raise the hot water target": "Subir la consigna de agua caliente",
-    "Lower the leaving water target": "Bajar la consigna de impulsión", "Raise the leaving water target": "Subir la consigna de impulsión", "Update {v} available": "Actualización {v} disponible"},
+    "Lower the leaving water target": "Bajar la consigna de impulsión", "Raise the leaving water target": "Subir la consigna de impulsión", "Update {v} available": "Actualización {v} disponible", "from your meter": "según su contador",
+    "Power meter for the live COP (W or kW)": "Medidor de potencia para el COP instantáneo (W o kW)", "Thermostat": "Termostato", "Day's figures": "Cifras del día", "Title": "Título", "Entity id prefix (a board on another base topic)": "Prefijo de los id de entidad (placa en otro topic base)", "Hidden": "Ocultos"},
   nl: {"Mode": "Modus", "Error": "Fout", "Current": "Stroom", "Show above the drawing": "Boven de tekening tonen", "Show below the drawing": "Onder de tekening tonen", "Heat output": "Geleverde warmte", "Electrical input": "Opgenomen elektriciteit", "Energy today": "Energie vandaag", "Heat, heating": "Warmte, verwarmen", "Electricity, heating": "Elektriciteit, verwarmen", "Heat, hot water": "Warmte, warm water", "Electricity, hot water": "Elektriciteit, warm water", "Starts today": "Starts vandaag", "Open the web interface": "Webinterface openen", "Outdoor unit error": "Fout buitenunit", "Indoor unit error": "Fout binnenunit",
     "Lower the hot water target": "Warmwater-setpoint verlagen", "Raise the hot water target": "Warmwater-setpoint verhogen",
-    "Lower the leaving water target": "Aanvoer-setpoint verlagen", "Raise the leaving water target": "Aanvoer-setpoint verhogen", "Update {v} available": "Update {v} beschikbaar"},
+    "Lower the leaving water target": "Aanvoer-setpoint verlagen", "Raise the leaving water target": "Aanvoer-setpoint verhogen", "Update {v} available": "Update {v} beschikbaar", "from your meter": "volgens uw meter",
+    "Power meter for the live COP (W or kW)": "Vermogensmeter voor de actuele COP (W of kW)", "Thermostat": "Thermostaat", "Day's figures": "Dagcijfers", "Title": "Titel", "Entity id prefix (a board on another base topic)": "Voorvoegsel van de entiteit-id's (bord op een ander basistopic)", "Hidden": "Verborgen"},
 };
 
 // Shrinks an SVG text to max units wide (translations can be longer than the English the drawing was made for)
@@ -426,10 +432,16 @@ class EspalthermaCard extends HTMLElement {
     const kwh = v => (v == null ? "0" : f(v, v < 10 ? 1 : 0));
     const mins = m => (m >= 60 ? tr(hass, "{h} h {m} min", {h: Math.floor(m / 60), m: Math.round(m % 60)}) : tr(hass, "{m} min", {m: Math.round(m)}));
     const fig = (key, k, v, unit, s) => `<div data-key="${key}"><div class="k">${k}</div><div class="v">${v}${unit ? `<small>${unit}</small>` : ""}</div><div class="s">${s}</div></div>`;
-    const running = n("heatKw") != null || (n("inv") || 0) >= 3;
-    const now = running ? (n("heatKw") != null ? tr(hass, "{heat} kW heat for {elec} kW", {heat: f(n("heatKw"), 1), elec: f(n("elecKw"), 1)}) : "")
+    // A power meter of your own (option power: an entity in W or kW): the live COP from it instead of the estimate.
+    // The day's figures stay the board's: the meter's energy is Home Assistant's business.
+    const meter = this._config.power && hass.states[this._config.power], meterV = meter ? parseFloat(meter.state) : NaN;
+    const meterKw = isNaN(meterV) ? null : meterV / (/^kw$/i.test(meter.attributes.unit_of_measurement || "") ? 1 : 1000);
+    const heat = n("heatKw"), elec = meterKw != null ? meterKw : n("elecKw");
+    const running = heat != null || (n("inv") || 0) >= 3;
+    const cop = meterKw != null ? (running && heat != null && elec > 0.1 ? heat / elec : null) : n("cop");
+    const now = running ? (heat != null ? tr(hass, "{heat} kW heat for {elec} kW", {heat: f(heat, 1), elec: f(elec, 1)}) + (meterKw != null ? " · " + tr(hass, "from your meter") : "") : "")
       : n("lastPause") > 0 ? tr(hass, "compressor off for {t}", {t: mins(n("lastPause"))}) : tr(hass, "compressor off");
-    let h = fig("cop", tr(hass, "COP now"), n("cop") != null ? f(n("cop"), 2) : running ? "…" : "—", "", now);
+    let h = fig("cop", tr(hass, "COP now"), cop != null ? f(cop, 2) : running ? "…" : "—", "", now);
     for (const [c, hk, ek, name] of [["copHeat", "heatHeat", "elecHeat", "Heating today"], ["copDhw", "heatDhw", "elecDhw", "Hot water today"]])
       if (has(hk)) h += fig(c, tr(hass, name), n(c) != null ? f(n(c), 2) : "—", n(c) != null ? "COP" : "",
         tr(hass, "{heat} kWh heat · {elec} kWh electricity", {heat: kwh(n(hk)), elec: kwh(n(ek))}));
@@ -445,6 +457,7 @@ class EspalthermaCard extends HTMLElement {
   getCardSize() { return 7; }
   getGridOptions() { return {columns: "full", min_columns: 6}; }
   static getStubConfig() { return {}; }
+  static getConfigElement() { return document.createElement("espaltherma-card-editor"); }
 }
 
 // Dashboard strategy: the drawing, the thermostat, the key values and their history
@@ -494,7 +507,46 @@ class EspalthermaStrategy {
   }
 }
 
+// The visual editor of the card: Home Assistant's form, with entity pickers for the power meter and the thermostat
+const EDITOR_FIELDS = ["power", "climate", "stats", "title", "prefix"];
+const EDITOR_LABELS = {power: "Power meter for the live COP (W or kW)", climate: "Thermostat", stats: "Day's figures", title: "Title",
+  prefix: "Entity id prefix (a board on another base topic)"};
+class EspalthermaCardEditor extends HTMLElement {
+  setConfig(config) { this._config = config || {}; this._render(); }
+  set hass(hass) { this._hass = hass; this._render(); }
+  _render() {
+    const hass = this._hass;
+    if (!hass || !this._config) return;
+    if (!this._form) {
+      this._form = document.createElement("ha-form");
+      this._form.addEventListener("value-changed", e => {
+        e.stopPropagation();
+        const v = e.detail.value || {}, config = {...this._config};
+        for (const k of EDITOR_FIELDS) {
+          if (v[k] === undefined || v[k] === null || v[k] === "") delete config[k]; else config[k] = v[k];
+        }
+        if (config.stats === "hidden") config.stats = false; else if (config.stats === "bottom") delete config.stats;
+        this._config = config;
+        this.dispatchEvent(new CustomEvent("config-changed", {detail: {config}, bubbles: true, composed: true}));
+      });
+      this.appendChild(this._form);
+    }
+    const stats = [["bottom", "Show below the drawing"], ["top", "Show above the drawing"], ["hidden", "Hidden"]];
+    this._form.hass = hass;
+    this._form.data = {...this._config, stats: this._config.stats === false ? "hidden" : this._config.stats || "bottom"};
+    this._form.schema = [
+      {name: "power", selector: {entity: {domain: "sensor", device_class: "power"}}},
+      {name: "climate", selector: {entity: {domain: "climate"}}},
+      {name: "stats", selector: {select: {mode: "dropdown", options: stats.map(([value, label]) => ({value, label: tr(hass, label)}))}}},
+      {name: "title", selector: {text: {}}},
+      {name: "prefix", selector: {text: {}}},
+    ];
+    this._form.computeLabel = s => tr(hass, EDITOR_LABELS[s.name] || s.name);
+  }
+}
+
 if (!customElements.get("espaltherma-card")) customElements.define("espaltherma-card", EspalthermaCard);
+if (!customElements.get("espaltherma-card-editor")) customElements.define("espaltherma-card-editor", EspalthermaCardEditor);
 if (!customElements.get("ll-strategy-dashboard-espaltherma")) customElements.define("ll-strategy-dashboard-espaltherma", class extends HTMLElement {
   static async generate(config, hass) { return EspalthermaStrategy.generate(config, hass); }
 });
