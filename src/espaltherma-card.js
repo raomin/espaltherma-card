@@ -3,7 +3,7 @@
 //   card:      type: custom:espaltherma-card   (options: climate, power, entities: {key: entity_id}, prefix, stats: top | bottom | false;
 //              a visual editor offers them)
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.27";
+const VERSION = "1.0.28";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -442,8 +442,8 @@ class EspalthermaCard extends HTMLElement {
     const now = running ? (heat != null ? tr(hass, "{heat} kW heat for {elec} kW", {heat: f(heat, 1), elec: f(elec, 1)}) + (meterKw != null ? " · " + tr(hass, "from your meter") : "") : "")
       : n("lastPause") > 0 ? tr(hass, "compressor off for {t}", {t: mins(n("lastPause"))}) : tr(hass, "compressor off");
     let h = fig("cop", tr(hass, "COP now"), cop != null ? f(cop, 2) : running ? "…" : "—", "", now);
-    for (const [c, hk, ek, name] of [["copHeat", "heatHeat", "elecHeat", "Heating today"], ["copDhw", "heatDhw", "elecDhw", "Hot water today"]])
-      if (has(hk)) h += fig(c, tr(hass, name), n(c) != null ? f(n(c), 2) : "—", n(c) != null ? "COP" : "",
+    for (const [c, hk, ek, name] of [["copHeat", "heatHeat", "elecHeat", tr(hass, "Heating today")], ["copDhw", "heatDhw", "elecDhw", tr(hass, "Hot water today")]])
+      if (has(hk)) h += fig(c, name, n(c) != null ? f(n(c), 2) : "—", n(c) != null ? "COP" : "",
         tr(hass, "{heat} kWh heat · {elec} kWh electricity", {heat: kwh(n(hk)), elec: kwh(n(ek))}));
     if (has("starts")) h += fig("starts", tr(hass, "Compressor starts"), f(n("starts"), 0), "",
       tr(hass, "{n} in the last hour · running {t} today", {n: f(n("startsHour"), 0), t: mins(n("runMin") || 0)}));
