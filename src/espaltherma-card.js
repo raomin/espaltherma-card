@@ -3,7 +3,7 @@
 //   card:      type: custom:espaltherma-card   (options: climate, power, entities: {key: entity_id}, prefix, stats: top | bottom | false;
 //              a visual editor offers them)
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.28";
+const VERSION = "1.0.29";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -23,7 +23,7 @@ const FIND = {
   mode: /^sensor\.espaltherma_operation_mode$/, err: /^sensor\.espaltherma_(ou_)?error_type$/, iuErr: /^sensor\.espaltherma_iu_error_type$/,
   defrost: /^binary_sensor\.espaltherma_defrost_operation$/,
   // two-zone units: the mixed zone's temperature after its valve, its pump, the direct zone's pump and target
-  mixed: /^sensor\.espaltherma_mixed_water_temp/, mixedKit: /^sensor\.espaltherma_(ekmik_bizone_kit_mixed_leaving_water|hpsu_mixed_leaving_water_temperature_after_the_tank)/,
+  mixed: /^sensor\.espaltherma_mixed_water_temp/, mixedKit: /^sensor\.espaltherma_ekmik_bizone_kit_mixed_leaving_water/,
   // an ECH2O unit (its [HPSU] values): the Daikin board's "Mixed water temp." and room values are not its own
   hpsu: /^sensor\.espaltherma_hpsu_/,
   mainPump: /^binary_sensor\.espaltherma_main_pump$/,
@@ -357,7 +357,8 @@ class EspalthermaCard extends HTMLElement {
     const mid = (a, b) => (a != null && b != null ? (a + b) / 2 : a);
     // Two zones (a direct one and a mixed one with its valve, pump and R7T) once the mixed water temperature reads
     // something: single-zone units answer 0 there
-    // The mixed zone's water is the bizone kit's sensor where the kit is fitted (the ECH2O units have no other)
+    // The mixed zone's water is the bizone kit's sensor where the kit is fitted (the ECH2O units have no other). Not
+    // the ECH2O's "[HPSU] Mixed leaving water temperature after the tank R7T": every ECH2O has it, the supply after the tank
     const mixedKit = n("mixedKit"), mixed = mixedKit != null && mixedKit !== 0 ? mixedKit : ent.hpsu ? null : n("mixed"), two = mixed != null && mixed !== 0;
     q("svg").classList.toggle("bizone", two);
     // No hot water tank, no room thermostat: none of their entities (once the heat pump's are there)
