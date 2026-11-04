@@ -3,7 +3,7 @@
 //   card:      type: custom:espaltherma-card   (options: climate, power, entities: {key: entity_id}, prefix, stats: top | bottom | false;
 //              a visual editor offers them)
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.29";
+const VERSION = "1.0.30";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -128,7 +128,7 @@ svg{display:block;width:100%;height:auto;min-width:min(480px,100vw - 32px)} /* f
 @keyframes fl{to{stroke-dashoffset:-18}}
 .br{transition:opacity .6s}.br:not(.act){opacity:.28}
 #gZones,.bz{display:none}svg.bizone #gZones,svg.bizone .bz{display:block}
-svg.bizone #pSpace,svg.bizone #pSpace+.fl,svg.bizone #bSpace,svg.bizone #pLoop,svg.bizone #pLoop+.fl,svg.bizone .sz{display:none}svg.bizone #gGauge{transform:translate(-48px,-435px)}
+svg.bizone #pSpace,svg.bizone #pSpace+.fl,svg.bizone #bSpace,svg.bizone #pLoop,svg.bizone #pLoop+.fl,svg.bizone .sz{display:none}svg.bizone #gGauge{transform:translate(-48px,-435px)}svg.bizone #gPump{transform:translate(60px,0)}
 #gZones .zoff{opacity:.3}#gZones .zoff .fl{animation:none;opacity:0}
 /* no hot water tank or no room thermostat (none of their entities): left out, the supply joins the house */
 svg.nodhw .dhw,svg.noroom .room,#pJoin,#pJoin+.fl{display:none}svg.nodhw #pJoin,svg.nodhw #pJoin+.fl{display:block}
@@ -203,8 +203,9 @@ const SVG = `<svg viewBox="0 0 800 560" role="img">
 <path d="M565 424H579M565 470H579" style="stroke:var(--ea-card);stroke-width:14"/>
 <g id="gMixed"><g class="click" data-key="mainPump"><path class="pipe" id="pMixed" d="M494 424H600V476"/>
 <path class="pipe" id="pLoopM" style="stroke-width:4.5" d="M600 476H686V490H612V504H686V518H600"/>
-<path class="pipe" id="pMixedR" d="M600 518H588V470H464V525"/>
+<path class="pipe" id="pMixedR" d="M600 518H588V470H455V525"/>
 <path class="pipe" id="pBypass" d="M482 470V433"/>
+<g id="gCheck"><path d="M447 488h16l-8 12z" style="fill:var(--ea-ink2)"/><path class="ln" d="M447 503h16"/></g>
 <circle class="sens" cx="528" cy="424" r="4.5"/>
 <circle class="eq" cx="525" cy="470" r="9"/><path d="M516 470l13-7.5v15z" style="fill:var(--ea-ink2)"/>
 <g class="valve"><path d="M473 415H491L482 424Z"/><path d="M473 433H491L482 424Z"/><path d="M494 415V433L482 424Z"/></g></g>
@@ -212,8 +213,8 @@ const SVG = `<svg viewBox="0 0 800 560" role="img">
 <text class="tv" x="474" y="404" text-anchor="end"><tspan id="sMixed"></tspan><tspan class="ts" dx="6" id="sLwSpMix"></tspan></text></g></g></g></g>
 <g class="valve dhw"><path id="vL" d="M470 81V99L482 90Z"/><path id="vR" class="shut" d="M494 81V99L482 90Z"/><path id="vB" d="M473 102H491L482 90Z"/></g>
 <text class="tl dhw" x="494" y="128" data-t="3-way valve"></text><text class="ts dhw" x="494" y="145" id="sV3"></text>
-<circle class="eq" cx="440" cy="525" r="16"/><path d="M425 525l21-12v24z" style="fill:var(--ea-ink2)"/>
-<text class="tl" x="440" y="556" text-anchor="middle" id="sPump"></text>
+<g id="gPump"><circle class="eq" cx="440" cy="525" r="16"/><path d="M425 525l21-12v24z" style="fill:var(--ea-ink2)"/>
+<text class="tl" x="440" y="556" text-anchor="middle" id="sPump"></text></g>
 <g class="click" id="gGauge" data-key="bar"><path class="ln" d="M500 506V525"/><circle class="eq" cx="500" cy="492" r="14"/><path id="needle" class="ln" style="stroke:var(--ea-hot);stroke-width:2.2" d="M500 492L491 499"/>
 <text class="tv" x="500" y="468" text-anchor="middle" id="sBar"></text></g>
 <rect x="346" y="519" width="14" height="12" rx="3" style="fill:var(--ea-ink2)"/>
@@ -371,7 +372,7 @@ class EspalthermaCard extends HTMLElement {
     q("#gDirect").classList.toggle("zoff", on("addPump") === false); q("#gMixed").classList.toggle("zoff", on("mainPump") === false);
     q("#tankFill").style.fill = tcol(tank, dark);
     // the Altherma HT reports its compressor as an inverter frequency in Hz
-    const v3 = on("v3"), flow = n("flow"), pump = on("pump") || (flow || 0) > 0.5, inv = n("inv") != null ? n("inv") : n("invHz");
+    const v3 = on("v3"), flow = n("flow"), pump = on("pump") || (on("pump") == null && two && on("addPump")) || (flow || 0) > 0.5, inv = n("inv") != null ? n("inv") : n("invHz");
     const invU = n("inv") == null && n("invHz") != null ? "Hz" : "rps";
     const svg = q("svg");
     q("#gDhw").classList.toggle("act", !!v3); q("#gSp").classList.toggle("act", !v3);
