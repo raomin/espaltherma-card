@@ -19,6 +19,9 @@ It is made for ESPAltherma 2, which publishes its values to Home Assistant throu
 ## Install
 
 **With HACS:**
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=raomin&repository=espaltherma-card&category=Dashboard)
+
 1. In HACS, open the menu (⋮) → *Custom repositories*.
 2. Add `https://github.com/raomin/espaltherma-card` with the type *Dashboard*.
 3. Find **ESPAltherma card** and download it. HACS adds it to your dashboard resources.
