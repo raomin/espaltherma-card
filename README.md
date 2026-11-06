@@ -40,6 +40,8 @@ strategy:
   type: custom:espaltherma
 ```
 
+The card's `climate`, `power` and `energy` options (below) can go under `strategy:` too; the strategy passes them to the card.
+
 The dashboard holds:
 - the drawing;
 - your thermostat;
@@ -62,6 +64,7 @@ Options (the card's visual editor in Home Assistant offers them, with pickers fo
 | --- | --- | --- |
 | `climate` | `climate.altherma`, or the first climate entity named after Altherma, Daikin or a heat pump (a room one first; the Daikin app's "leaving water offset" ones are skipped) | the thermostat shown in the house |
 | `power` | none | a power meter of your own on the heat pump (an entity in W or kW): the live COP and the "kW in" come from it instead of ESPAltherma's estimate. The day's figures stay ESPAltherma's |
+| `energy` | none | an energy meter of your own on the heat pump (a counter in kWh, Wh or MWh): a line "Today from your meter" with the day's COP, the heat ESPAltherma measured over what the meter counted since midnight. The count comes from Home Assistant's statistics, so the recorder must keep the entity (it does unless you excluded it) |
 | `entities` | found by their ESPAltherma ids | override one value, e.g. `entities: {out: sensor.my_outdoor_temp}` |
 | `prefix` | `espaltherma` | the board's base topic when it is not the default, as it appears in its entity ids: `prefix: espaltherma_odu` for a board on the base topic `espaltherma-odu`. With two boards, take the other one's values through `entities` |
 | `title` | none | card title |

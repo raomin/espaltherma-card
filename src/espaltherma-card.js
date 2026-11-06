@@ -1,9 +1,9 @@
 // ESPAltherma card and dashboard for Home Assistant: the live drawing of the heating installation of the
 // ESPAltherma web page, fed by the entities ESPAltherma publishes through MQTT discovery.
-//   card:      type: custom:espaltherma-card   (options: climate, power, entities: {key: entity_id}, prefix, stats: top | bottom | false;
+//   card:      type: custom:espaltherma-card   (options: climate, power, energy, entities: {key: entity_id}, prefix, stats: top | bottom | false;
 //              a visual editor offers them)
-//   dashboard: strategy: {type: custom:espaltherma}   (options: climate)
-const VERSION = "1.0.30";
+//   dashboard: strategy: {type: custom:espaltherma}   (options: climate, power, energy)
+const VERSION = "1.0.31";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -39,6 +39,7 @@ const FIND = {
   copHeat: /^sensor\.espaltherma_stats_cop_today_heating$/, copDhw: /^sensor\.espaltherma_stats_cop_today_hot_water$/,
   heatHeat: /^sensor\.espaltherma_stats_heat_today_heating_kwh$/, elecHeat: /^sensor\.espaltherma_stats_electricity_today_heating_kwh$/,
   heatDhw: /^sensor\.espaltherma_stats_heat_today_hot_water_kwh$/, elecDhw: /^sensor\.espaltherma_stats_electricity_today_hot_water_kwh$/,
+  heatCool: /^sensor\.espaltherma_stats_heat_today_cooling_kwh$/,
   starts: /^sensor\.espaltherma_stats_compressor_starts_today$/, startsHour: /^sensor\.espaltherma_stats_compressor_starts_last_hour$/,
   runMin: /^sensor\.espaltherma_stats_compressor_run_today_min$/, lastRun: /^sensor\.espaltherma_stats_last_run_min$/, lastPause: /^sensor\.espaltherma_stats_last_pause_min$/,
   defrosts: /^sensor\.espaltherma_stats_defrosts_today$/,
@@ -50,23 +51,23 @@ const OWN = {
   fr: {"Mode": "Mode", "Error": "Erreur", "Current": "Courant", "Show above the drawing": "Afficher au-dessus du schéma", "Show below the drawing": "Afficher sous le schéma", "Heat output": "Chaleur fournie", "Electrical input": "Électricité absorbée", "Energy today": "Énergie du jour", "Heat, heating": "Chaleur, chauffage", "Electricity, heating": "Électricité, chauffage", "Heat, hot water": "Chaleur, eau chaude", "Electricity, hot water": "Électricité, eau chaude", "Starts today": "Démarrages du jour", "Open the web interface": "Ouvrir l'interface web", "Outdoor unit error": "Erreur unité extérieure", "Indoor unit error": "Erreur unité intérieure",
     "Lower the hot water target": "Baisser la consigne d'eau chaude", "Raise the hot water target": "Monter la consigne d'eau chaude",
     "Lower the leaving water target": "Baisser la consigne de départ d'eau", "Raise the leaving water target": "Monter la consigne de départ d'eau", "Update {v} available": "Mise à jour {v} disponible", "from your meter": "d'après votre compteur",
-    "Power meter for the live COP (W or kW)": "Compteur de puissance pour le COP instantané (W ou kW)", "Thermostat": "Thermostat", "Day's figures": "Chiffres du jour", "Title": "Titre", "Entity id prefix (a board on another base topic)": "Préfixe des identifiants d'entité (carte sur un autre topic de base)", "Hidden": "Masqués"},
+    "Power meter for the live COP (W or kW)": "Compteur de puissance pour le COP instantané (W ou kW)", "Thermostat": "Thermostat", "Day's figures": "Chiffres du jour", "Title": "Titre", "Entity id prefix (a board on another base topic)": "Préfixe des identifiants d'entité (carte sur un autre topic de base)", "Hidden": "Masqués", "Today from your meter": "Aujourd'hui d'après votre compteur", "Energy meter for the day's COP (kWh)": "Compteur d'énergie pour le COP du jour (kWh)", "no statistics for this entity yet": "pas encore de statistiques pour cette entité"},
   de: {"Mode": "Betriebsart", "Error": "Fehler", "Current": "Strom", "Show above the drawing": "Über der Zeichnung anzeigen", "Show below the drawing": "Unter der Zeichnung anzeigen", "Heat output": "Wärmeleistung", "Electrical input": "Stromaufnahme", "Energy today": "Energie heute", "Heat, heating": "Wärme, Heizen", "Electricity, heating": "Strom, Heizen", "Heat, hot water": "Wärme, Warmwasser", "Electricity, hot water": "Strom, Warmwasser", "Starts today": "Starts heute", "Open the web interface": "Weboberfläche öffnen", "Outdoor unit error": "Fehler Außengerät", "Indoor unit error": "Fehler Innengerät",
     "Lower the hot water target": "Warmwasser-Sollwert senken", "Raise the hot water target": "Warmwasser-Sollwert anheben",
     "Lower the leaving water target": "Vorlauf-Sollwert senken", "Raise the leaving water target": "Vorlauf-Sollwert anheben", "Update {v} available": "Update {v} verfügbar", "from your meter": "laut Ihrem Zähler",
-    "Power meter for the live COP (W or kW)": "Leistungsmesser für den aktuellen COP (W oder kW)", "Thermostat": "Thermostat", "Day's figures": "Tageswerte", "Title": "Titel", "Entity id prefix (a board on another base topic)": "Präfix der Entitäts-IDs (Board auf einem anderen Basis-Topic)", "Hidden": "Ausgeblendet"},
+    "Power meter for the live COP (W or kW)": "Leistungsmesser für den aktuellen COP (W oder kW)", "Thermostat": "Thermostat", "Day's figures": "Tageswerte", "Title": "Titel", "Entity id prefix (a board on another base topic)": "Präfix der Entitäts-IDs (Board auf einem anderen Basis-Topic)", "Hidden": "Ausgeblendet", "Today from your meter": "Heute laut Ihrem Zähler", "Energy meter for the day's COP (kWh)": "Energiezähler für den Tages-COP (kWh)", "no statistics for this entity yet": "noch keine Statistiken für diese Entität"},
   it: {"Mode": "Modalità", "Error": "Errore", "Current": "Corrente", "Show above the drawing": "Mostra sopra lo schema", "Show below the drawing": "Mostra sotto lo schema", "Heat output": "Calore fornito", "Electrical input": "Elettricità assorbita", "Energy today": "Energia di oggi", "Heat, heating": "Calore, riscaldamento", "Electricity, heating": "Elettricità, riscaldamento", "Heat, hot water": "Calore, acqua calda", "Electricity, hot water": "Elettricità, acqua calda", "Starts today": "Avvii di oggi", "Open the web interface": "Aprire l'interfaccia web", "Outdoor unit error": "Errore unità esterna", "Indoor unit error": "Errore unità interna",
     "Lower the hot water target": "Abbassare la temperatura desiderata dell'acqua calda", "Raise the hot water target": "Alzare la temperatura desiderata dell'acqua calda",
     "Lower the leaving water target": "Abbassare la temperatura di mandata desiderata", "Raise the leaving water target": "Alzare la temperatura di mandata desiderata", "Update {v} available": "Aggiornamento {v} disponibile", "from your meter": "dal vostro contatore",
-    "Power meter for the live COP (W or kW)": "Misuratore di potenza per il COP istantaneo (W o kW)", "Thermostat": "Termostato", "Day's figures": "Dati del giorno", "Title": "Titolo", "Entity id prefix (a board on another base topic)": "Prefisso degli id delle entità (scheda su un altro topic di base)", "Hidden": "Nascosti"},
+    "Power meter for the live COP (W or kW)": "Misuratore di potenza per il COP istantaneo (W o kW)", "Thermostat": "Termostato", "Day's figures": "Dati del giorno", "Title": "Titolo", "Entity id prefix (a board on another base topic)": "Prefisso degli id delle entità (scheda su un altro topic di base)", "Hidden": "Nascosti", "Today from your meter": "Oggi dal vostro contatore", "Energy meter for the day's COP (kWh)": "Contatore di energia per il COP del giorno (kWh)", "no statistics for this entity yet": "ancora nessuna statistica per questa entità"},
   es: {"Mode": "Modo", "Error": "Error", "Current": "Corriente", "Show above the drawing": "Mostrar encima del esquema", "Show below the drawing": "Mostrar debajo del esquema", "Heat output": "Calor entregado", "Electrical input": "Electricidad consumida", "Energy today": "Energía de hoy", "Heat, heating": "Calor, calefacción", "Electricity, heating": "Electricidad, calefacción", "Heat, hot water": "Calor, agua caliente", "Electricity, hot water": "Electricidad, agua caliente", "Starts today": "Arranques de hoy", "Open the web interface": "Abrir la interfaz web", "Outdoor unit error": "Error unidad exterior", "Indoor unit error": "Error unidad interior",
     "Lower the hot water target": "Bajar la consigna de agua caliente", "Raise the hot water target": "Subir la consigna de agua caliente",
     "Lower the leaving water target": "Bajar la consigna de impulsión", "Raise the leaving water target": "Subir la consigna de impulsión", "Update {v} available": "Actualización {v} disponible", "from your meter": "según su contador",
-    "Power meter for the live COP (W or kW)": "Medidor de potencia para el COP instantáneo (W o kW)", "Thermostat": "Termostato", "Day's figures": "Cifras del día", "Title": "Título", "Entity id prefix (a board on another base topic)": "Prefijo de los id de entidad (placa en otro topic base)", "Hidden": "Ocultos"},
+    "Power meter for the live COP (W or kW)": "Medidor de potencia para el COP instantáneo (W o kW)", "Thermostat": "Termostato", "Day's figures": "Cifras del día", "Title": "Título", "Entity id prefix (a board on another base topic)": "Prefijo de los id de entidad (placa en otro topic base)", "Hidden": "Ocultos", "Today from your meter": "Hoy según su contador", "Energy meter for the day's COP (kWh)": "Contador de energía para el COP del día (kWh)", "no statistics for this entity yet": "aún no hay estadísticas para esta entidad"},
   nl: {"Mode": "Modus", "Error": "Fout", "Current": "Stroom", "Show above the drawing": "Boven de tekening tonen", "Show below the drawing": "Onder de tekening tonen", "Heat output": "Geleverde warmte", "Electrical input": "Opgenomen elektriciteit", "Energy today": "Energie vandaag", "Heat, heating": "Warmte, verwarmen", "Electricity, heating": "Elektriciteit, verwarmen", "Heat, hot water": "Warmte, warm water", "Electricity, hot water": "Elektriciteit, warm water", "Starts today": "Starts vandaag", "Open the web interface": "Webinterface openen", "Outdoor unit error": "Fout buitenunit", "Indoor unit error": "Fout binnenunit",
     "Lower the hot water target": "Warmwater-setpoint verlagen", "Raise the hot water target": "Warmwater-setpoint verhogen",
     "Lower the leaving water target": "Aanvoer-setpoint verlagen", "Raise the leaving water target": "Aanvoer-setpoint verhogen", "Update {v} available": "Update {v} beschikbaar", "from your meter": "volgens uw meter",
-    "Power meter for the live COP (W or kW)": "Vermogensmeter voor de actuele COP (W of kW)", "Thermostat": "Thermostaat", "Day's figures": "Dagcijfers", "Title": "Titel", "Entity id prefix (a board on another base topic)": "Voorvoegsel van de entiteit-id's (bord op een ander basistopic)", "Hidden": "Verborgen"},
+    "Power meter for the live COP (W or kW)": "Vermogensmeter voor de actuele COP (W of kW)", "Thermostat": "Thermostaat", "Day's figures": "Dagcijfers", "Title": "Titel", "Entity id prefix (a board on another base topic)": "Voorvoegsel van de entiteit-id's (bord op een ander basistopic)", "Hidden": "Verborgen", "Today from your meter": "Vandaag volgens uw meter", "Energy meter for the day's COP (kWh)": "Energiemeter voor de dag-COP (kWh)", "no statistics for this entity yet": "nog geen statistieken voor deze entiteit"},
 };
 
 // Shrinks an SVG text to max units wide (translations can be longer than the English the drawing was made for)
@@ -78,6 +79,18 @@ function tr(hass, s, p) {
   let r = (I18N[lang] && I18N[lang][s]) || (OWN[lang] && OWN[lang][s]) || s;
   if (p) r = r.replace(/\{(\w+)\}/g, (m, k) => (p[k] != null ? p[k] : m));
   return r;
+}
+
+// Midnight of the current day in a time zone (Home Assistant's: the browser may sit in another one)
+function midnightIn(tz) {
+  const now = new Date();
+  try {
+    const parts = d => Object.fromEntries(new Intl.DateTimeFormat("en-US", {timeZone: tz, hour12: false, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric"})
+      .formatToParts(d).filter(x => x.type !== "literal").map(x => [x.type, parseInt(x.value, 10)]));
+    const offset = d => { const p = parts(d); return Date.UTC(p.year, p.month - 1, p.day, p.hour % 24, p.minute, p.second) - Math.floor(d.getTime() / 1000) * 1000; };
+    const p = parts(now), day = Date.UTC(p.year, p.month - 1, p.day);
+    return new Date(day - offset(new Date(day - offset(now)))); // the zone's offset at that midnight, not now (a DST day)
+  } catch (e) { now.setHours(0, 0, 0, 0); return now; }
 }
 
 function findEntities(hass, config) {
@@ -325,6 +338,7 @@ class EspalthermaCard extends HTMLElement {
   _paint() {
     const hass = this._hass, root = this._root, q = s => root.querySelector(s);
     const ent = this._ent = findEntities(hass, this._config);
+    for (const k of ["power", "energy"]) if (this._config[k]) ent[k] = this._config[k]; // the meters: a tap opens them too
     this._climate = this._config.climate || defaultClimate(hass);
     const dark = !!(hass.themes && hass.themes.darkMode);
     this.toggleAttribute("dark", dark);
@@ -447,6 +461,14 @@ class EspalthermaCard extends HTMLElement {
     for (const [c, hk, ek, name] of [["copHeat", "heatHeat", "elecHeat", tr(hass, "Heating today")], ["copDhw", "heatDhw", "elecDhw", tr(hass, "Hot water today")]])
       if (has(hk)) h += fig(c, name, n(c) != null ? f(n(c), 2) : "—", n(c) != null ? "COP" : "",
         tr(hass, "{heat} kWh heat · {elec} kWh electricity", {heat: kwh(n(hk)), elec: kwh(n(ek))}));
+    // An energy meter of your own (option energy: a counter in kWh): the day's COP from what it counted since
+    // midnight, against the heat ESPAltherma measured; the count comes from Home Assistant's statistics
+    if (this._config.energy && has("heatHeat")) {
+      const m = this._meterToday(hass), heat = ["heatHeat", "heatDhw", "heatCool"].reduce((a, k) => a + (n(k) || 0), 0);
+      const elec = m && m.ok ? m.kwh + this._meterTail(hass, m) : null, cop = elec > 0.1 && heat > 0 ? heat / elec : null;
+      h += fig("energy", tr(hass, "Today from your meter"), !m ? "…" : cop != null ? f(cop, 2) : "—", cop != null ? "COP" : "",
+        !m ? "" : !m.ok ? tr(hass, "no statistics for this entity yet") : tr(hass, "{heat} kWh heat · {elec} kWh electricity", {heat: kwh(heat), elec: kwh(elec)}));
+    }
     if (has("starts")) h += fig("starts", tr(hass, "Compressor starts"), f(n("starts"), 0), "",
       tr(hass, "{n} in the last hour · running {t} today", {n: f(n("startsHour"), 0), t: mins(n("runMin") || 0)}));
     if (has("lastRun")) h += fig("lastRun", tr(hass, "Last cycle"), n("lastRun") > 0 ? mins(n("lastRun")) : "—", "",
@@ -454,6 +476,36 @@ class EspalthermaCard extends HTMLElement {
     if (n("defrosts") > 0) h += fig("defrosts", tr(hass, "Defrosts"), f(n("defrosts"), 0), "", "");
     h += `<button class="flip" type="button" title="${tr(hass, top ? "Show below the drawing" : "Show above the drawing")}"><svg viewBox="0 0 24 24"><path d="${top ? "M6 9l6 6 6-6" : "M6 15l6-6 6 6"}"/></svg></button>`;
     if (h !== this._todayHtml) { box.innerHTML = h; this._todayHtml = h; }
+  }
+
+  // What the energy meter counted today: the sum of the 5-minute changes Home Assistant's statistics hold since
+  // midnight (its time zone), in kWh whatever the counter's unit, fetched again every 5 minutes or on a new day.
+  // Null while the first fetch runs; the last answer stays while a refresh runs
+  _meterToday(hass) {
+    const id = this._config.energy, m = this._meter;
+    const midnight = midnightIn(hass.config && hass.config.time_zone).getTime();
+    const stale = !m || m.id !== id || m.midnight !== midnight || Date.now() - m.at > 300000;
+    if (stale && !this._meterPending) {
+      this._meterPending = true;
+      const call = hass.callWS ? hass.callWS({type: "recorder/statistics_during_period", start_time: new Date(midnight).toISOString(),
+        statistic_ids: [id], period: "5minute", types: ["change", "state"], units: {energy: "kWh"}}) : Promise.reject(new Error("no connection"));
+      call.then(r => {
+        const rows = (r && r[id]) || [], last = rows.length ? rows[rows.length - 1] : null;
+        this._meter = {id, midnight, at: Date.now(), ok: rows.length > 0, kwh: rows.reduce((a, x) => a + (x.change || 0), 0),
+          lastState: last && last.state != null ? last.state : null};
+      }).catch(() => { this._meter = {id, midnight, at: Date.now(), ok: false}; })
+        .then(() => { this._meterPending = false; this._todayHtml = null; if (this._hass) this._paint(); });
+    }
+    return m && m.id === id && m.midnight === midnight ? m : null;
+  }
+
+  // The meter's movement since its last statistics bucket (up to 5 minutes): the live reading minus the bucket's
+  // last state, so the figure does not wait for the next bucket
+  _meterTail(hass, m) {
+    const s = hass.states[this._config.energy], v = s ? parseFloat(s.state) : NaN;
+    if (m.lastState == null || isNaN(v)) return 0;
+    const u = (s.attributes.unit_of_measurement || "kWh").toLowerCase(), d = v * (u === "wh" ? 0.001 : u === "mwh" ? 1000 : 1) - m.lastState;
+    return d >= 0 && d < 100 ? d : 0; // a counter that reset waits for its next bucket
   }
 
   getCardSize() { return 7; }
@@ -490,8 +542,10 @@ class EspalthermaStrategy {
     tiles.push(...["cop", "heatKw", "elecKw", "starts"].filter(has).map(k => ({type: "tile", entity: ent[k], name: name[k], grid_options: {columns: 6}})));
     const line = k => ({entity: ent[k], name: name[k]});
     const water = ["lw2", "lw1", "mixed", "inlet", "tank", "out"].filter(has).map(line);
+    const meters = {}; // the user's meters, passed on to the card
+    for (const k of ["power", "energy"]) if (config && config[k]) meters[k] = config[k];
     const sections = [
-      {type: "grid", column_span: 3, cards: [{type: "custom:espaltherma-card", climate, grid_options: {columns: "full"}}]},
+      {type: "grid", column_span: 3, cards: [{type: "custom:espaltherma-card", climate, ...meters, grid_options: {columns: "full"}}]},
       {type: "grid", cards: [
         ...(climate ? [{type: "thermostat", entity: climate, grid_options: {columns: "full"}}] : []),
         ...tiles,
@@ -509,9 +563,9 @@ class EspalthermaStrategy {
   }
 }
 
-// The visual editor of the card: Home Assistant's form, with entity pickers for the power meter and the thermostat
-const EDITOR_FIELDS = ["power", "climate", "stats", "title", "prefix"];
-const EDITOR_LABELS = {power: "Power meter for the live COP (W or kW)", climate: "Thermostat", stats: "Day's figures", title: "Title",
+// The visual editor of the card: Home Assistant's form, with entity pickers for the meters and the thermostat
+const EDITOR_FIELDS = ["power", "energy", "climate", "stats", "title", "prefix"];
+const EDITOR_LABELS = {power: "Power meter for the live COP (W or kW)", energy: "Energy meter for the day's COP (kWh)", climate: "Thermostat", stats: "Day's figures", title: "Title",
   prefix: "Entity id prefix (a board on another base topic)"};
 class EspalthermaCardEditor extends HTMLElement {
   setConfig(config) { this._config = config || {}; this._render(); }
@@ -538,6 +592,7 @@ class EspalthermaCardEditor extends HTMLElement {
     this._form.data = {...this._config, stats: this._config.stats === false ? "hidden" : this._config.stats || "bottom"};
     this._form.schema = [
       {name: "power", selector: {entity: {domain: "sensor", device_class: "power"}}},
+      {name: "energy", selector: {entity: {domain: "sensor", device_class: "energy"}}},
       {name: "climate", selector: {entity: {domain: "climate"}}},
       {name: "stats", selector: {select: {mode: "dropdown", options: stats.map(([value, label]) => ({value, label: tr(hass, label)}))}}},
       {name: "title", selector: {text: {}}},
