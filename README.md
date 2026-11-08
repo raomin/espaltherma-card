@@ -68,7 +68,7 @@ Options (the card's visual editor in Home Assistant offers them, with pickers fo
 | `entities` | found by their ESPAltherma ids | override one value, e.g. `entities: {out: sensor.my_outdoor_temp}` |
 | `prefix` | `espaltherma` | the board's base topic when it is not the default, as it appears in its entity ids: `prefix: espaltherma_odu` for a board on the base topic `espaltherma-odu`. With two boards, take the other one's values through `entities` |
 | `title` | none | card title |
-| `stats` | `bottom` | the day's figures (COP, energies, compressor cycles), when ESPAltherma computes them (Settings → Energy and cycles): `bottom` or `top` of the drawing, `false` hides them. The arrow on the strip moves it too, and the browser remembers that choice |
+| `stats` | `bottom` | the day's figures (COP, energies, compressor cycles), when ESPAltherma computes them (Settings → Energy and cycles), and the unit's own counters since its installation (heat produced, compressor and pump hours, starts) where the hydro board gives them (ESPAltherma 2.0.0-beta.26): `bottom` or `top` of the drawing, `false` hides them. The arrow on the strip moves it too, and the browser remembers that choice |
 
 Keys of `entities`:
 
