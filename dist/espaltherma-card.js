@@ -3,7 +3,7 @@
 //   card:      type: custom:espaltherma-card   (options: climate, power, energy, entities: {key: entity_id}, prefix, stats: top | bottom | false;
 //              a visual editor offers them)
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate, power, energy)
-const VERSION = "1.0.33";
+const VERSION = "1.0.34";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -239,10 +239,10 @@ const SVG = `<svg viewBox="0 0 800 560" role="img">
 <rect x="346" y="519" width="14" height="12" rx="3" style="fill:var(--ea-ink2)"/>
 <circle class="sens" cx="330" cy="190" r="4.5"/><circle class="sens" cx="390" cy="90" r="4.5"/><circle class="sens" cx="300" cy="440" r="4.5"/>
 <g id="tags"></g>
-<g id="gLwtSet" class="step"><rect x="438" y="45" width="124" height="26" rx="13"/><path class="sep" d="M466 51v14M534 51v14"/><g class="btn" data-act="lwt-"><title data-t="Lower the leaving water target"></title><path class="half" d="M451 45h15v26h-15a13 13 0 0 1 0 -26z"/><path class="sym" d="M448 58h8"/></g><g class="btn" data-act="lwt+"><title data-t="Raise the leaving water target"></title><path class="half" d="M534 45h15a13 13 0 0 1 0 26h-15z"/><path class="sym" d="M544 58h8M548 54v8"/></g></g>
+<g id="gLwtSet" class="step click" data-key="lwtSet"><rect x="438" y="45" width="124" height="26" rx="13"/><path class="sep" d="M466 51v14M534 51v14"/><g class="btn" data-act="lwt-"><title data-t="Lower the leaving water target"></title><path class="half" d="M451 45h15v26h-15a13 13 0 0 1 0 -26z"/><path class="sym" d="M448 58h8"/></g><g class="btn" data-act="lwt+"><title data-t="Raise the leaving water target"></title><path class="half" d="M534 45h15a13 13 0 0 1 0 26h-15z"/><path class="sym" d="M544 58h8M548 54v8"/></g></g>
 <text class="ts sz" x="500" y="62" text-anchor="middle" id="sLwSp" style="pointer-events:none"></text>
 <text class="ts eff" x="500" y="82" text-anchor="middle" id="sLwtEff"><title id="tLwtEff"></title><tspan id="vLwtEff"></tspan></text>
-<g id="gDhwSet" class="step"><rect x="603" y="155" width="124" height="26" rx="13"/><path class="sep" d="M631 161v14M699 161v14"/><g class="btn" data-act="dhw-"><title data-t="Lower the hot water target"></title><path class="half" d="M616 155h15v26h-15a13 13 0 0 1 0 -26z"/><path class="sym" d="M613 168h8"/></g><g class="btn" data-act="dhw+"><title data-t="Raise the hot water target"></title><path class="half" d="M699 155h15a13 13 0 0 1 0 26h-15z"/><path class="sym" d="M709 168h8M713 164v8"/></g></g>
+<g id="gDhwSet" class="step click" data-key="dhwSet"><rect x="603" y="155" width="124" height="26" rx="13"/><path class="sep" d="M631 161v14M699 161v14"/><g class="btn" data-act="dhw-"><title data-t="Lower the hot water target"></title><path class="half" d="M616 155h15v26h-15a13 13 0 0 1 0 -26z"/><path class="sym" d="M613 168h8"/></g><g class="btn" data-act="dhw+"><title data-t="Raise the hot water target"></title><path class="half" d="M699 155h15a13 13 0 0 1 0 26h-15z"/><path class="sym" d="M709 168h8M713 164v8"/></g></g>
 <g class="click dhw" data-key="tank"><text class="tl" x="665" y="104" text-anchor="middle" data-t="Hot water"></text>
 <text class="tb" x="665" y="148" text-anchor="middle" id="sTank"></text>
 <text class="ts" x="665" y="172" text-anchor="middle" id="sDhwSp"></text></g>
