@@ -3,20 +3,23 @@
 //   card:      type: custom:espaltherma-card   (options: climate, power, energy, entities: {key: entity_id}, prefix, stats: top | bottom | false;
 //              a visual editor offers them)
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate, power, energy)
-const VERSION = "1.0.35";
+const VERSION = "1.0.36";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
 // the leaving water (and the Hybrid the room temperature), the ECH2O ones the water temperatures ("[HPSU] Tv inflow
-// Temp (R1T)", "[HPSU] Tvbh inflow Temp after Buffer/BUH (R2T)", "[HPSU] Tr return Temp (R4T)")
+// Temp (R1T)", "[HPSU] Tvbh inflow Temp after Buffer/BUH (R2T)", "[HPSU] Tr return Temp (R4T)"); the Altherma HT has
+// its tank, its 3-way valve and its pump only among the values read on its indoor bus ("E0: DHW tank (C)", "E0: 3-way
+// valve DHW", "E0: Pump"), the last two as 0 / 1 sensors
 const FIND = {
   out: /^sensor\.espaltherma_.*outdoor_air_temp/, lw1: /^sensor\.espaltherma_(leaving_water_temp_before_buh|outlet_water_temp|outlet_water_heat_exch_temp|hpsu_tv_inflow_temp)/,
   lw2: /^sensor\.espaltherma_(leaving_water_temp_after_buh|outlet_water_buh_temp|hpsu_tvbh_inflow_temp|leaving_water_temp_hydrobox)/, r3t: /^sensor\.espaltherma_refrig_temp_liquid_side/,
-  inlet: /^sensor\.espaltherma_(inlet_water_temp|hpsu_tr_return_temp)/, tank: /^sensor\.espaltherma_dhw_tank_temp/,
+  inlet: /^sensor\.espaltherma_(inlet_water_temp|hpsu_tr_return_temp)/, tank: /^sensor\.espaltherma_(dhw_tank_temp|e0_dhw_tank_c$)/,
   room: /^sensor\.espaltherma_(indoor_ambient_temp|rt_temp$)/, dhwSp: /^sensor\.espaltherma_dhw_setpoint$/,
   lwSp: /^sensor\.espaltherma_lw_setpoint_main/, rtSp: /^sensor\.espaltherma_rt_setpoint$/,
   inv: /^sensor\.espaltherma_inv_frequency/, invHz: /^sensor\.espaltherma_inv_comp_frequency/, amp: /^sensor\.espaltherma_inv_primary_current/,
-  v3: /^binary_sensor\.espaltherma_(3way_valve|priority_to_domestic_water)/, pump: /^binary_sensor\.espaltherma_water_pump_operation/,
+  v3: /^(binary_sensor\.espaltherma_(3way_valve|priority_to_domestic_water)|sensor\.espaltherma_e0_3way_valve_dhw$)/,
+  pump: /^(binary_sensor\.espaltherma_water_pump_operation|sensor\.espaltherma_e0_pump$)/,
   flow: /^sensor\.espaltherma_flow_sensor/, bar: /^sensor\.espaltherma_water_pressure$/,
   // "Error type" of the outdoor unit, named "O/U Error type" once told apart from the indoor unit's "I/U Error type"
   // (ESPAltherma #617)
@@ -375,7 +378,9 @@ class EspalthermaCard extends HTMLElement {
       dev.title = tr(hass, "Every entity of this board in Home Assistant");
       dev.onclick = e => { e.preventDefault(); history.pushState(null, "", dev.getAttribute("href")); window.dispatchEvent(new CustomEvent("location-changed", {bubbles: true, composed: true})); };
     }
-    const on = k => { const s = st(k); return s ? s.state === "on" : null; };
+    // On: a binary sensor's "on", or a sensor that counts it as a number (1 for the HT's valve and pump; any entity
+    // given in the configuration may be one)
+    const on = k => { const s = st(k); return s ? s.state === "on" || parseFloat(s.state) > 0 : null; };
     const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
     const deg = v => (v == null ? "—" : f1(v) + "°");
     const tx = (id, s) => { q("#" + id).textContent = s; };
