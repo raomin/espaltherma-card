@@ -3,7 +3,7 @@
 //   card:      type: custom:espaltherma-card   (options: climate, power, energy, entities: {key: entity_id}, prefix, stats: top | bottom | false;
 //              a visual editor offers them)
 //   dashboard: strategy: {type: custom:espaltherma}   (options: climate, power, energy)
-const VERSION = "1.0.36";
+const VERSION = "1.0.37";
 
 // Entities, by the ids ESPAltherma's discovery gives them (built from the English labels, the same everywhere);
 // the Rotex definition names the leaving water and the 3-way valve its own way, the Hybrid, EBLQ 5-7kW and EWAQ ones
@@ -83,6 +83,15 @@ const OWN = {
 const fit = (el, max) => { el.style.fontSize = ''; const w = el.getComputedTextLength ? el.getComputedTextLength() : 0;
   if (w > max) el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize) * max / w).toFixed(1) + 'px'; };
 
+// An entity's name as Home Assistant lists it under its device: the friendly name without the device's name in front
+function entityName(hass, id) {
+  const st = id && hass.states[id];
+  if (!st) return "";
+  const s = String(st.attributes.friendly_name || "").trim();
+  const reg = hass.entities && hass.entities[id], dev = reg && hass.devices && hass.devices[reg.device_id];
+  const d = String(dev && (dev.name_by_user || dev.name) || "").trim();
+  return d && s.length > d.length + 1 && s.toLowerCase().startsWith(d.toLowerCase() + " ") ? s.slice(d.length + 1) : s;
+}
 function tr(hass, s, p) {
   const lang = ((hass && (hass.locale && hass.locale.language || hass.language)) || "en").slice(0, 2);
   let r = (I18N[lang] && I18N[lang][s]) || (OWN[lang] && OWN[lang][s]) || s;
@@ -250,7 +259,7 @@ const SVG = `<svg viewBox="0 0 800 560" role="img">
 <text class="tb" x="665" y="148" text-anchor="middle" id="sTank"></text>
 <g class="click" id="gDhwSp" data-key="dhwSp"><text class="ts" x="665" y="172" text-anchor="middle" id="sDhwSp"></text></g></g>
 <text class="ts eff" x="665" y="192" text-anchor="middle" id="sDhwEff"><title id="tDhwEff"></title><tspan id="vDhwEff"></tspan></text>
-<g class="click room sz" data-key="room"><text class="tl" x="685" y="390" text-anchor="middle" data-t="Living room"></text>
+<g class="click room sz" data-key="room"><text class="tl" x="685" y="390" text-anchor="middle" id="lRoom"></text>
 <text class="tb" x="685" y="432" text-anchor="middle" id="sRoom"></text>
 <text class="ts" x="685" y="456" text-anchor="middle" id="sRtSp"></text></g>
 <text class="tl bz" x="718" y="392" text-anchor="middle" data-t="Direct zone"></text>
@@ -429,6 +438,11 @@ class EspalthermaCard extends HTMLElement {
     const room = clim && clim.attributes.current_temperature != null ? parseFloat(clim.attributes.current_temperature) : ownRoom ? null : n("room");
     const target = clim && clim.state !== "off" && clim.attributes.temperature != null ? parseFloat(clim.attributes.temperature) : ownRoom ? null : sp("rtSp");
     tx("sRoom", deg(room)); tx("sRoomB", deg(room));
+    // The house is named after the entity its temperature comes from, as Home Assistant names it: the thermostat
+    // may hang in a hallway. Renaming the entity there renames it here.
+    const roomName = entityName(hass, clim ? this._climate : ent.room) || tr(hass, "Indoor");
+    tx("lRoom", roomName.length > 30 ? roomName.slice(0, 29).trim() + "…" : roomName);
+    requestAnimationFrame(() => fit(q("#lRoom"), 160));
     const target_ = v => tr(hass, "Target {n}°", {n: Math.round(v * 10) / 10});
     const roomTarget = target != null ? target_(target) : clim && clim.state === "off" ? (hass.formatEntityState ? hass.formatEntityState(clim) : "off") : "";
     tx("sRtSp", roomTarget); tx("sRtSpB", roomTarget);
