@@ -21,6 +21,8 @@ const FIND = {
   v3: /^(binary_sensor\.espaltherma_(3way_valve|priority_to_domestic_water)|sensor\.espaltherma_e0_3way_valve_dhw$)/,
   pump: /^(binary_sensor\.espaltherma_water_pump_operation|sensor\.espaltherma_e0_pump$)/,
   flow: /^sensor\.espaltherma_flow_sensor/, bar: /^sensor\.espaltherma_water_pressure$/,
+  // the Altherma Hybrid's sensor is in its gas boiler: the unit's own value reads 0 there, the board gives the boiler's
+  boilerBar: /^sensor\.espaltherma_boiler_water_pressure/,
   // "Error type" of the outdoor unit, named "O/U Error type" once told apart from the indoor unit's "I/U Error type"
   // (ESPAltherma #617)
   mode: /^sensor\.espaltherma_operation_mode$/, err: /^sensor\.espaltherma_(ou_)?error_type$/, iuErr: /^sensor\.espaltherma_iu_error_type$/,
@@ -428,7 +430,9 @@ class EspalthermaCard extends HTMLElement {
     requestAnimationFrame(() => { fit(q("#lComp"), 70); fit(q("#sInv"), 70); });
     tx("sV3", v3 == null ? "" : v3 ? tr(hass, "to the hot water") : tr(hass, "to the house"));
     tx("sPump", on("pump") == null && flow == null ? "" : pump ? tr(hass, "Pump on") : tr(hass, "Pump off"));
-    const bar = n("bar") || null; // exactly 0: no pressure sensor on the unit
+    // exactly 0: no pressure sensor on the unit. A Hybrid then has its boiler's, and a tap on the gauge opens that one
+    const barKey = !n("bar") && n("boilerBar") ? "boilerBar" : "bar", bar = n(barKey) || null;
+    q("#gGauge").dataset.key = barKey;
     tx("sBar", bar == null ? "" : f1(bar) + " bar");
     const a = (-135 + (bar || 0) / 4 * 270) * Math.PI / 180;
     q("#needle").setAttribute("d", `M500 492L${(500 + 11 * Math.sin(a)).toFixed(1)} ${(492 - 11 * Math.cos(a)).toFixed(1)}`);
@@ -574,6 +578,8 @@ class EspalthermaStrategy {
       iuErr: tr(hass, "Indoor unit error")};
     // Both units' errors (ESPAltherma tells them apart since #617): one tile each, named after their unit
     if (has("err") && has("iuErr")) name.err = tr(hass, "Outdoor unit error");
+    // A Hybrid's water pressure is its gas boiler's: the unit's own value reads 0 there
+    if (has("boilerBar") && !(parseFloat(has("bar") && hass.states[ent.bar].state) > 0)) ent.bar = ent.boilerBar;
     const tiles = ["out", "tank", "inv", "flow", "bar", "mode", "err", "iuErr"].filter(has)
       .map(k => ({type: "tile", entity: ent[k], name: name[k], grid_options: {columns: 6}}));
     // The targets, with their own buttons, when the heat pump accepts them
